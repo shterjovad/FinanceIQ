@@ -5,6 +5,11 @@ This is the main entry point for the Streamlit web application.
 
 import streamlit as st
 
+from src.pdf_processor.logging_config import setup_logging
+
+# Initialize logging
+setup_logging()
+
 
 def main() -> None:
     """Main application entry point."""
