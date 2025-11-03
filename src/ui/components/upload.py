@@ -45,60 +45,84 @@ class PDFUploadComponent:
             "10-K reports, earnings reports, or other financial statements."
         )
 
-        # File uploader
-        uploaded_file = st.file_uploader(
-            "Choose a PDF file",
+        # File uploader - supports multiple files
+        uploaded_files = st.file_uploader(
+            "Choose PDF file(s)",
             type=["pdf"],
-            accept_multiple_files=False,
-            help=f"Maximum file size: {settings.MAX_FILE_SIZE_MB}MB",
+            accept_multiple_files=True,
+            help=f"Maximum file size: {settings.MAX_FILE_SIZE_MB}MB per file",
         )
 
-        if uploaded_file is not None:
-            logger.info(f"File uploaded via UI: {uploaded_file.name}")
+        if uploaded_files:
+            logger.info(f"{len(uploaded_files)} file(s) uploaded via UI")
 
-            # Convert Streamlit UploadedFile to our UploadedFile model
-            try:
-                file_model = UploadedFile(
-                    name=uploaded_file.name,
-                    content=uploaded_file.read(),
-                    size=uploaded_file.size,
-                    mime_type=uploaded_file.type or "application/pdf",
-                )
+            # Process each uploaded file
+            for uploaded_file in uploaded_files:
+                # Use expander for each file's processing
+                with st.container():
+                    st.markdown(f"### {uploaded_file.name}")
 
-                # Process the file through the service
-                result = self.service.process_upload(file_model)
+                    # Convert Streamlit UploadedFile to our UploadedFile model
+                    try:
+                        file_model = UploadedFile(
+                            name=uploaded_file.name,
+                            content=uploaded_file.read(),
+                            size=uploaded_file.size,
+                            mime_type=uploaded_file.type or "application/pdf",
+                        )
 
-                # Display processing result
-                if result.success:
-                    # Success case - display success message and metadata
-                    st.success(
-                        f"✓ Document processed successfully! "
-                        f"({result.processing_time_seconds:.2f}s)"
-                    )
-                    st.success(f"✓ File saved to: `{result.document.file_path}`")
+                        # Create progress bar
+                        progress_bar = st.progress(0, text="Validating file...")
 
-                    # Display metadata in 4 columns
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric("Pages", result.document.metadata.page_count)
-                    with col2:
-                        st.metric("Size", f"{result.document.metadata.file_size_mb} MB")
-                    with col3:
-                        st.metric("Characters", f"{result.document.metadata.text_length:,}")
-                    with col4:
-                        st.metric("Processing Time", f"{result.processing_time_seconds:.2f}s")
+                        # Update progress: Starting validation
+                        progress_bar.progress(10, text="Validating file...")
 
-                    # Display text preview in expander
-                    with st.expander("📄 Text Preview (first 1000 characters)"):
-                        preview_text = result.document.extracted_text[:1000]
-                        if len(result.document.extracted_text) > 1000:
-                            preview_text += "..."
-                        st.text(preview_text)
+                        # Process the file through the service
+                        # We'll update progress during processing
+                        progress_bar.progress(30, text="Extracting text...")
 
-                else:
-                    # Failure case - display error message
-                    st.error(f"✗ Processing failed: {result.error_message}")
+                        result = self.service.process_upload(file_model)
 
-            except Exception as e:
-                logger.error(f"Error processing uploaded file: {str(e)}", exc_info=True)
-                st.error(f"An unexpected error occurred: {str(e)}")
+                        # Update progress: Complete
+                        progress_bar.progress(100, text="Complete!")
+
+                        # Clear progress bar
+                        progress_bar.empty()
+
+                        # Display processing result
+                        if result.success:
+                            # Success case - display success message per functional spec
+                            st.success(
+                                f"Document uploaded successfully! {result.document.filename} "
+                                f"is ready for analysis. You can now ask questions about this document."
+                            )
+
+                            # Display metadata in 4 columns
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.metric("Pages", result.document.metadata.page_count)
+                            with col2:
+                                st.metric("Size", f"{result.document.metadata.file_size_mb} MB")
+                            with col3:
+                                st.metric("Characters", f"{result.document.metadata.text_length:,}")
+                            with col4:
+                                st.metric("Processing Time", f"{result.processing_time_seconds:.2f}s")
+
+                            # Display text preview in expander
+                            with st.expander("📄 Text Preview (first 1000 characters)"):
+                                preview_text = result.document.extracted_text[:1000]
+                                if len(result.document.extracted_text) > 1000:
+                                    preview_text += "..."
+                                st.text(preview_text)
+
+                        else:
+                            # Failure case - display error message
+                            st.error(f"✗ {result.error_message}")
+
+                        # Add separator between files
+                        st.markdown("---")
+
+                    except Exception as e:
+                        logger.error(f"Error processing uploaded file: {str(e)}", exc_info=True)
+                        st.error(f"An unexpected error occurred: {str(e)}")
+                        st.markdown("---")
