@@ -3,7 +3,6 @@
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -48,7 +47,7 @@ class FileValidationResult(BaseModel):
 
     status: FileValidationStatus
     is_valid: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class DocumentMetadata(BaseModel):
@@ -100,8 +99,8 @@ class ProcessingResult(BaseModel):
     """Result of PDF processing operation."""
 
     success: bool
-    document: Optional[ExtractedDocument] = None
-    error_message: Optional[str] = None
+    document: ExtractedDocument | None = None
+    error_message: str | None = None
     processing_time_seconds: float = Field(ge=0, description="Time taken to process")
 
     @field_validator("processing_time_seconds")

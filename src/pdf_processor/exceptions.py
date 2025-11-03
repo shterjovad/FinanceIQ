@@ -47,7 +47,7 @@ class InvalidFileTypeError(PDFProcessingError):
 class PasswordProtectedPDFError(PDFProcessingError):
     """Raised when attempting to process a password-protected PDF."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with standard message."""
         message = "This PDF is password-protected. Please upload an unprotected version."
         super().__init__(message)

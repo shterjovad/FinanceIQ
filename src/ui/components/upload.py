@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class PDFUploadComponent:
     """Handles PDF file upload and validation UI."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the upload component."""
         # Create validator instance with settings from config
         validator = PDFValidator(
@@ -92,6 +92,7 @@ class PDFUploadComponent:
                         # Display processing result
                         if result.success:
                             # Success case - display success message per functional spec
+                            assert result.document is not None  # Type narrowing for mypy
                             st.success(
                                 f"Document uploaded successfully! {result.document.filename} "
                                 f"is ready for analysis. You can now ask questions about this document."
@@ -106,7 +107,9 @@ class PDFUploadComponent:
                             with col3:
                                 st.metric("Characters", f"{result.document.metadata.text_length:,}")
                             with col4:
-                                st.metric("Processing Time", f"{result.processing_time_seconds:.2f}s")
+                                st.metric(
+                                    "Processing Time", f"{result.processing_time_seconds:.2f}s"
+                                )
 
                             # Display text preview in expander
                             with st.expander("📄 Text Preview (first 1000 characters)"):
