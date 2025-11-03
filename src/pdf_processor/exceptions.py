@@ -26,10 +26,7 @@ class FileSizeExceededError(PDFProcessingError):
         """
         self.file_size_mb = file_size_mb
         self.max_size_mb = max_size_mb
-        message = (
-            f"File size ({file_size_mb:.2f}MB) exceeds maximum allowed size "
-            f"({max_size_mb}MB)"
-        )
+        message = f"File size exceeds {max_size_mb}MB limit. Please upload a smaller document."
         super().__init__(message)
 
 
@@ -43,7 +40,7 @@ class InvalidFileTypeError(PDFProcessingError):
             file_type: The detected file type or extension
         """
         self.file_type = file_type
-        message = f"Invalid file type: {file_type}. Only PDF files are supported."
+        message = "Only PDF files are supported. Please upload a .pdf file."
         super().__init__(message)
 
 
@@ -66,9 +63,10 @@ class CorruptedPDFError(PDFProcessingError):
             details: Additional details about the corruption
         """
         self.details = details
-        message = "The PDF file is corrupted or cannot be read."
-        if details:
-            message += f" Details: {details}"
+        message = (
+            "This PDF file appears to be corrupted and cannot be processed. "
+            "Please check the file and try again."
+        )
         super().__init__(message)
 
 
@@ -83,7 +81,7 @@ class NoTextContentError(PDFProcessingError):
         """
         self.text_length = text_length
         message = (
-            "No text content found in PDF. This may be a scanned document or image-based PDF. "
-            "Please upload a text-based PDF."
+            "Unable to extract text from this PDF. "
+            "Please ensure it contains selectable text (not scanned images)."
         )
         super().__init__(message)
