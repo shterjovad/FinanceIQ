@@ -6,6 +6,7 @@ This is the main entry point for the Streamlit web application.
 import streamlit as st
 
 from src.pdf_processor.logging_config import setup_logging
+from src.ui.components.upload import PDFUploadComponent
 
 # Initialize logging
 setup_logging()
@@ -24,8 +25,9 @@ def main() -> None:
     # Display main title
     st.title("FinanceIQ - Financial Document Analysis")
 
-    # Display placeholder text
-    st.write("Upload financial documents to begin")
+    # Render upload component
+    upload_component = PDFUploadComponent()
+    upload_component.render()
 
 
 if __name__ == "__main__":
