@@ -5,9 +5,9 @@ import logging
 import streamlit as st
 
 from src.config.settings import settings
-from src.pdf_processor.exceptions import NoTextContentError
 from src.pdf_processor.extractors import PDFTextExtractor
 from src.pdf_processor.models import UploadedFile
+from src.pdf_processor.service import PDFProcessingService
 from src.pdf_processor.storage import FileStorageManager
 from src.pdf_processor.validators import PDFValidator
 
@@ -20,15 +20,22 @@ class PDFUploadComponent:
     def __init__(self):
         """Initialize the upload component."""
         # Create validator instance with settings from config
-        self.validator = PDFValidator(
+        validator = PDFValidator(
             max_size_mb=settings.MAX_FILE_SIZE_MB,
             allowed_mime_types=settings.ALLOWED_MIME_TYPES,
         )
         # Create text extractor instance
-        self.extractor = PDFTextExtractor(min_text_length=100)
+        extractor = PDFTextExtractor(min_text_length=100)
         # Create storage manager instance
-        self.storage = FileStorageManager(base_dir=settings.UPLOAD_DIR)
-        logger.debug("PDFUploadComponent initialized")
+        storage_manager = FileStorageManager(base_dir=settings.UPLOAD_DIR)
+
+        # Create processing service with dependency injection
+        self.service = PDFProcessingService(
+            validator=validator,
+            extractor=extractor,
+            storage_manager=storage_manager,
+        )
+        logger.debug("PDFUploadComponent initialized with PDFProcessingService")
 
     def render(self) -> None:
         """Render the file upload component and handle validation."""
@@ -58,49 +65,39 @@ class PDFUploadComponent:
                     mime_type=uploaded_file.type or "application/pdf",
                 )
 
-                # Validate the file
-                validation_result = self.validator.validate_file(file_model)
+                # Process the file through the service
+                result = self.service.process_upload(file_model)
 
-                # Display validation result
-                if validation_result.is_valid:
-                    st.success("✓ File validation successful!")
+                # Display processing result
+                if result.success:
+                    # Success case - display success message and metadata
+                    st.success(
+                        f"✓ Document processed successfully! "
+                        f"({result.processing_time_seconds:.2f}s)"
+                    )
+                    st.success(f"✓ File saved to: `{result.document.file_path}`")
 
-                    # Extract text from PDF
-                    try:
-                        extracted_text = self.extractor.extract_text(file_model)
-                        metadata = self.extractor.extract_metadata(file_model, extracted_text)
+                    # Display metadata in 4 columns
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Pages", result.document.metadata.page_count)
+                    with col2:
+                        st.metric("Size", f"{result.document.metadata.file_size_mb} MB")
+                    with col3:
+                        st.metric("Characters", f"{result.document.metadata.text_length:,}")
+                    with col4:
+                        st.metric("Processing Time", f"{result.processing_time_seconds:.2f}s")
 
-                        st.success("✓ Text extraction successful!")
-
-                        # Save file to disk
-                        try:
-                            file_path = self.storage.save_file(file_model)
-                            st.success(f"✓ File saved successfully to: `{file_path}`")
-                        except IOError as e:
-                            st.error(f"✗ Failed to save file: {str(e)}")
-
-                        # Display metrics in columns
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.metric("Pages", metadata.page_count)
-                        with col2:
-                            st.metric("Size", f"{metadata.file_size_mb} MB")
-                        with col3:
-                            st.metric("Characters", f"{metadata.text_length:,}")
-
-                        # Display text preview in expander
-                        with st.expander("📄 Text Preview (first 1000 characters)"):
-                            preview_text = extracted_text[:1000]
-                            if len(extracted_text) > 1000:
-                                preview_text += "..."
-                            st.text(preview_text)
-
-                    except NoTextContentError as e:
-                        st.error(f"✗ Text extraction failed: {e.message}")
+                    # Display text preview in expander
+                    with st.expander("📄 Text Preview (first 1000 characters)"):
+                        preview_text = result.document.extracted_text[:1000]
+                        if len(result.document.extracted_text) > 1000:
+                            preview_text += "..."
+                        st.text(preview_text)
 
                 else:
-                    # Display error message based on validation status
-                    st.error(f"✗ Validation failed: {validation_result.error_message}")
+                    # Failure case - display error message
+                    st.error(f"✗ Processing failed: {result.error_message}")
 
             except Exception as e:
                 logger.error(f"Error processing uploaded file: {str(e)}", exc_info=True)
