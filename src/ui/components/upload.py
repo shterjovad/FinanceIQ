@@ -8,6 +8,7 @@ from src.config.settings import settings
 from src.pdf_processor.exceptions import NoTextContentError
 from src.pdf_processor.extractors import PDFTextExtractor
 from src.pdf_processor.models import UploadedFile
+from src.pdf_processor.storage import FileStorageManager
 from src.pdf_processor.validators import PDFValidator
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ class PDFUploadComponent:
         )
         # Create text extractor instance
         self.extractor = PDFTextExtractor(min_text_length=100)
+        # Create storage manager instance
+        self.storage = FileStorageManager(base_dir=settings.UPLOAD_DIR)
         logger.debug("PDFUploadComponent initialized")
 
     def render(self) -> None:
@@ -68,6 +71,13 @@ class PDFUploadComponent:
                         metadata = self.extractor.extract_metadata(file_model, extracted_text)
 
                         st.success("✓ Text extraction successful!")
+
+                        # Save file to disk
+                        try:
+                            file_path = self.storage.save_file(file_model)
+                            st.success(f"✓ File saved successfully to: `{file_path}`")
+                        except IOError as e:
+                            st.error(f"✗ Failed to save file: {str(e)}")
 
                         # Display metrics in columns
                         col1, col2, col3 = st.columns(3)
