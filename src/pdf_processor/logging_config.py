@@ -21,13 +21,10 @@ def setup_logging() -> None:
 
     # Create formatters
     detailed_formatter = logging.Formatter(
-        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    console_formatter = logging.Formatter(
-        fmt="%(levelname)s - %(message)s"
-    )
+    console_formatter = logging.Formatter(fmt="%(levelname)s - %(message)s")
 
     # Console handler (INFO level)
     console_handler = logging.StreamHandler(sys.stdout)

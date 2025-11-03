@@ -71,8 +71,7 @@ class PDFTextExtractor:
                 raise NoTextContentError(text_length=len(full_text))
 
             logger.info(
-                f"Text extraction successful: {len(full_text)} chars "
-                f"from {total_pages} pages"
+                f"Text extraction successful: {len(full_text)} chars from {total_pages} pages"
             )
 
             return full_text
@@ -83,7 +82,7 @@ class PDFTextExtractor:
 
         except Exception as e:
             logger.error(f"Unexpected error during text extraction: {str(e)}", exc_info=True)
-            raise NoTextContentError(text_length=0)
+            raise NoTextContentError(text_length=0) from e
 
     def extract_metadata(self, file: UploadedFile, extracted_text: str) -> DocumentMetadata:
         """Extract metadata from a PDF file.

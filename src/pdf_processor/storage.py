@@ -54,13 +54,13 @@ class FileStorageManager:
             logger.info(f"File saved successfully: {file_path}")
             return file_path
 
-        except IOError as e:
+        except OSError as e:
             logger.error(f"Failed to save file {file.name}: {str(e)}", exc_info=True)
-            raise IOError(f"Failed to save file: {str(e)}") from e
+            raise OSError(f"Failed to save file: {str(e)}") from e
 
         except Exception as e:
             logger.error(f"Unexpected error saving file {file.name}: {str(e)}", exc_info=True)
-            raise IOError(f"Unexpected error saving file: {str(e)}") from e
+            raise OSError(f"Unexpected error saving file: {str(e)}") from e
 
     def _get_date_path(self) -> Path:
         """Get date-based directory path in YYYY/MM/DD format.

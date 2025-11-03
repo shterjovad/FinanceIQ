@@ -2,7 +2,6 @@
 
 import logging
 from io import BytesIO
-from typing import List
 
 from pypdf import PdfReader
 
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 class PDFValidator:
     """Validates PDF files for size, type, and structure."""
 
-    def __init__(self, max_size_mb: int, allowed_mime_types: List[str]):
+    def __init__(self, max_size_mb: int, allowed_mime_types: list[str]):
         """Initialize the validator.
 
         Args:
@@ -115,9 +114,7 @@ class PDFValidator:
             FileSizeExceededError: If file size exceeds maximum
         """
         if file.size_mb > self.max_size_mb:
-            raise FileSizeExceededError(
-                file_size_mb=file.size_mb, max_size_mb=self.max_size_mb
-            )
+            raise FileSizeExceededError(file_size_mb=file.size_mb, max_size_mb=self.max_size_mb)
 
     def _validate_type(self, file: UploadedFile) -> None:
         """Validate file type using extension and MIME type.
@@ -170,4 +167,4 @@ class PDFValidator:
         except Exception as e:
             # Any other error indicates corrupted PDF
             logger.error(f"PDF structure validation failed: {str(e)}")
-            raise CorruptedPDFError(details=str(e))
+            raise CorruptedPDFError(details=str(e)) from e
