@@ -5,6 +5,8 @@ import logging
 import streamlit as st
 
 from src.config.settings import settings
+from src.pdf_processor.exceptions import NoTextContentError
+from src.pdf_processor.extractors import PDFTextExtractor
 from src.pdf_processor.models import UploadedFile
 from src.pdf_processor.validators import PDFValidator
 
@@ -21,6 +23,8 @@ class PDFUploadComponent:
             max_size_mb=settings.MAX_FILE_SIZE_MB,
             allowed_mime_types=settings.ALLOWED_MIME_TYPES,
         )
+        # Create text extractor instance
+        self.extractor = PDFTextExtractor(min_text_length=100)
         logger.debug("PDFUploadComponent initialized")
 
     def render(self) -> None:
@@ -57,11 +61,33 @@ class PDFUploadComponent:
                 # Display validation result
                 if validation_result.is_valid:
                     st.success("✓ File validation successful!")
-                    st.info(
-                        f"**File:** {file_model.name}  \n"
-                        f"**Size:** {file_model.size_mb}MB  \n"
-                        f"**Type:** {file_model.mime_type}"
-                    )
+
+                    # Extract text from PDF
+                    try:
+                        extracted_text = self.extractor.extract_text(file_model)
+                        metadata = self.extractor.extract_metadata(file_model, extracted_text)
+
+                        st.success("✓ Text extraction successful!")
+
+                        # Display metrics in columns
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Pages", metadata.page_count)
+                        with col2:
+                            st.metric("Size", f"{metadata.file_size_mb} MB")
+                        with col3:
+                            st.metric("Characters", f"{metadata.text_length:,}")
+
+                        # Display text preview in expander
+                        with st.expander("📄 Text Preview (first 1000 characters)"):
+                            preview_text = extracted_text[:1000]
+                            if len(extracted_text) > 1000:
+                                preview_text += "..."
+                            st.text(preview_text)
+
+                    except NoTextContentError as e:
+                        st.error(f"✗ Text extraction failed: {e.message}")
+
                 else:
                     # Display error message based on validation status
                     st.error(f"✗ Validation failed: {validation_result.error_message}")
