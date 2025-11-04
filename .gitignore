@@ -21,3 +21,6 @@ wheels/
 # Application data
 data/uploads/
 logs/
+
+# Test PDFs (download fresh for testing)
+data/sample/*.pdf

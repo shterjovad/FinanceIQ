@@ -1,0 +1,15 @@
+
+To properly test FinanceIQ, please download real financial PDFs:
+
+1. Tesla 10-K (2023):
+   https://www.sec.gov/Archives/edgar/data/1318605/000095017024013948/tsla-20231231.htm
+   (Click "Download" to get the PDF)
+
+2. Apple Earnings Report:
+   https://s2.q4cdn.com/470004039/files/doc_earnings/2024/q4/filing/_10-K-Q4-2024-As-Filed.pdf
+
+3. Or use any publicly available financial PDF from:
+   - SEC EDGAR: https://www.sec.gov/edgar/searchedgar/companysearch.html
+   - Company investor relations pages
+
+Save PDFs to: data/sample/
