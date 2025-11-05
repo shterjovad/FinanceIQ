@@ -21,6 +21,31 @@ class Settings(BaseSettings):
     # Logging settings
     LOG_LEVEL: str = "INFO"
 
+    # === RAG SETTINGS ===
+
+    # Document Chunking
+    CHUNK_SIZE: int = 1000  # Target tokens per chunk
+    CHUNK_OVERLAP: int = 200  # Overlap tokens for context preservation
+    CHUNKING_SEPARATORS: list[str] = ["\n\n", "\n", ". ", " "]  # Hierarchical splitting
+
+    # Vector Database (Qdrant)
+    QDRANT_HOST: str = "localhost"
+    QDRANT_PORT: int = 6333
+    QDRANT_COLLECTION: str = "financial_docs"
+
+    # LLM & Embeddings (via LiteLLM)
+    OPENAI_API_KEY: str  # Required from .env
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIMENSION: int = 1536
+    PRIMARY_LLM: str = "gpt-4-turbo-preview"
+    FALLBACK_LLM: str = "gpt-3.5-turbo"  # Fallback if rate limited
+    LLM_TEMPERATURE: float = 0.0  # Deterministic for consistency
+    LLM_MAX_TOKENS: int = 2000
+
+    # Query Processing
+    TOP_K_CHUNKS: int = 5  # Number of chunks to retrieve
+    MIN_RELEVANCE_SCORE: float = 0.7  # Minimum similarity threshold
+
     # Pydantic configuration
     model_config = SettingsConfigDict(
         env_file=".env",
