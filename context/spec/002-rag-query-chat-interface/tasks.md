@@ -23,10 +23,10 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Test Qdrant starts successfully: `docker compose up -d`
   - [x] Verify Qdrant health endpoint: `http://localhost:6333/health`
 
-- [ ] **Slice 1.2: Add RAG Dependencies**
-  - [ ] Add to `pyproject.toml`: `langchain`, `langchain-openai`, `qdrant-client`, `litellm`, `tiktoken`
-  - [ ] Run `poetry lock && poetry install` to install dependencies
-  - [ ] Verify all packages import correctly in Python REPL
+- [x] **Slice 1.2: Add RAG Dependencies**
+  - [x] Add to `pyproject.toml`: `langchain`, `langchain-openai`, `qdrant-client`, `litellm`, `tiktoken`
+  - [x] Run `uv sync` to install dependencies
+  - [x] Verify all packages import correctly in Python REPL
 
 - [ ] **Slice 1.3: Configuration Settings**
   - [ ] Extend `src/config/settings.py` with RAG settings section
