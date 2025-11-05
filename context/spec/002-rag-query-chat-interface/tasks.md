@@ -44,11 +44,11 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Create `src/rag/exceptions.py` with custom exceptions: `RAGError`, `ChunkingError`, `EmbeddingError`, `VectorStoreError`, `QueryError`
   - [x] Verify imports work: `from src.rag.models import DocumentChunk`
 
-- [ ] **Slice 1.5: Add Placeholder Chat Tab**
-  - [ ] Update `src/ui/app.py` to add "💬 Ask Questions" tab alongside "📄 Upload Documents"
-  - [ ] Create placeholder content: "RAG Query System - Coming Soon!"
-  - [ ] Display Qdrant connection status (green if connected, red if not)
-  - [ ] Run app and verify new tab appears, no errors
+- [x] **Slice 1.5: Add Placeholder Chat Tab**
+  - [x] Update `src/ui/app.py` to add "💬 Ask Questions" tab alongside "📄 Upload Documents"
+  - [x] Create placeholder content: "RAG Query System - Coming Soon!"
+  - [x] Display Qdrant connection status (green if connected, red if not)
+  - [x] Run app and verify new tab appears, no errors
 
 **Runnable Outcome**: App starts successfully with new tab, Qdrant runs, all infrastructure ready, no errors.
 
