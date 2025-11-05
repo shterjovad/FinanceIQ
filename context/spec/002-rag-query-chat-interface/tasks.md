@@ -67,13 +67,13 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Add error handling for empty documents (raise `ChunkingError`)
   - [x] Add logging for chunk creation
 
-- [ ] **Slice 2.2: Unit Tests for Chunking**
-  - [ ] Create `tests/rag/test_chunker.py`
-  - [ ] Test chunking a simple document (verify chunk count, overlap)
-  - [ ] Test page number tracking accuracy
-  - [ ] Test empty document handling (should raise `ChunkingError`)
-  - [ ] Test single-sentence document (edge case)
-  - [ ] Run tests: `pytest tests/rag/test_chunker.py -v`
+- [x] **Slice 2.2: Unit Tests for Chunking**
+  - [x] Create `tests/rag/test_chunker.py`
+  - [x] Test chunking a simple document (verify chunk count, overlap)
+  - [x] Test page number tracking accuracy
+  - [x] Test empty document handling (should raise `ChunkingError`)
+  - [x] Test single-sentence document (edge case)
+  - [x] Run tests: `pytest tests/rag/test_chunker.py -v`
 
 - [ ] **Slice 2.3: Add Chunk Preview to Upload UI**
   - [ ] Update `PDFUploadComponent` to optionally show chunk preview
