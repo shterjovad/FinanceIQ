@@ -32,7 +32,9 @@ def check_qdrant_connection() -> bool:
         )
         # Try to get collections to verify connection
         client.get_collections()
-        logger.info(f"Successfully connected to Qdrant at {settings.QDRANT_HOST}:{settings.QDRANT_PORT}")
+        logger.info(
+            f"Successfully connected to Qdrant at {settings.QDRANT_HOST}:{settings.QDRANT_PORT}"
+        )
         return True
     except (UnexpectedResponse, ConnectionError, TimeoutError, Exception) as e:
         logger.warning(f"Failed to connect to Qdrant: {str(e)}")
