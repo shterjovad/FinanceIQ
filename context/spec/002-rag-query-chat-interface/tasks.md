@@ -38,11 +38,11 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Add `OPENAI_API_KEY` to local `.env` file
   - [x] Test settings load correctly when app starts
 
-- [ ] **Slice 1.4: Create RAG Module Structure**
-  - [ ] Create `src/rag/__init__.py` with module exports
-  - [ ] Create `src/rag/models.py` with Pydantic models: `DocumentChunk`, `QueryResult`, `SourceCitation`, `RAGResult`, `ChatMessage`
-  - [ ] Create `src/rag/exceptions.py` with custom exceptions: `RAGError`, `ChunkingError`, `EmbeddingError`, `VectorStoreError`, `QueryError`
-  - [ ] Verify imports work: `from src.rag.models import DocumentChunk`
+- [x] **Slice 1.4: Create RAG Module Structure**
+  - [x] Create `src/rag/__init__.py` with module exports
+  - [x] Create `src/rag/models.py` with Pydantic models: `DocumentChunk`, `QueryResult`, `SourceCitation`, `RAGResult`, `ChatMessage`
+  - [x] Create `src/rag/exceptions.py` with custom exceptions: `RAGError`, `ChunkingError`, `EmbeddingError`, `VectorStoreError`, `QueryError`
+  - [x] Verify imports work: `from src.rag.models import DocumentChunk`
 
 - [ ] **Slice 1.5: Add Placeholder Chat Tab**
   - [ ] Update `src/ui/app.py` to add "💬 Ask Questions" tab alongside "📄 Upload Documents"
