@@ -57,15 +57,15 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 2: Document Chunking with Preview
 **Goal**: Implement document chunking and show chunk preview in UI so users can see their document is being processed.
 
-- [ ] **Slice 2.1: Implement DocumentChunker**
-  - [ ] Create `src/rag/chunker.py` with `DocumentChunker` class
-  - [ ] Implement `__init__` with LangChain `RecursiveCharacterTextSplitter`
-  - [ ] Implement `chunk_document(document: ExtractedDocument) -> list[DocumentChunk]`
-  - [ ] Add page number tracking by mapping character positions to pages
-  - [ ] Generate unique `chunk_id` (UUID) for each chunk
-  - [ ] Calculate `token_count` using tiktoken
-  - [ ] Add error handling for empty documents (raise `ChunkingError`)
-  - [ ] Add logging for chunk creation
+- [x] **Slice 2.1: Implement DocumentChunker**
+  - [x] Create `src/rag/chunker.py` with `DocumentChunker` class
+  - [x] Implement `__init__` with LangChain `RecursiveCharacterTextSplitter`
+  - [x] Implement `chunk_document(document: ExtractedDocument) -> list[DocumentChunk]`
+  - [x] Add page number tracking by mapping character positions to pages
+  - [x] Generate unique `chunk_id` (UUID) for each chunk
+  - [x] Calculate `token_count` using tiktoken
+  - [x] Add error handling for empty documents (raise `ChunkingError`)
+  - [x] Add logging for chunk creation
 
 - [ ] **Slice 2.2: Unit Tests for Chunking**
   - [ ] Create `tests/rag/test_chunker.py`
