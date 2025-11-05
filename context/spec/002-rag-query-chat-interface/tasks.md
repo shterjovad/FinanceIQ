@@ -28,15 +28,15 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Run `uv sync` to install dependencies
   - [x] Verify all packages import correctly in Python REPL
 
-- [ ] **Slice 1.3: Configuration Settings**
-  - [ ] Extend `src/config/settings.py` with RAG settings section
-  - [ ] Add chunking settings: `CHUNK_SIZE`, `CHUNK_OVERLAP`, `CHUNKING_SEPARATORS`
-  - [ ] Add Qdrant settings: `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION`
-  - [ ] Add LLM settings: `OPENAI_API_KEY`, `EMBEDDING_MODEL`, `PRIMARY_LLM`, `FALLBACK_LLM`
-  - [ ] Add query settings: `TOP_K_CHUNKS`, `MIN_RELEVANCE_SCORE`
-  - [ ] Update `.env.example` with new required variables
-  - [ ] Add `OPENAI_API_KEY` to local `.env` file
-  - [ ] Test settings load correctly when app starts
+- [x] **Slice 1.3: Configuration Settings**
+  - [x] Extend `src/config/settings.py` with RAG settings section
+  - [x] Add chunking settings: `CHUNK_SIZE`, `CHUNK_OVERLAP`, `CHUNKING_SEPARATORS`
+  - [x] Add Qdrant settings: `QDRANT_HOST`, `QDRANT_PORT`, `QDRANT_COLLECTION`
+  - [x] Add LLM settings: `OPENAI_API_KEY`, `EMBEDDING_MODEL`, `PRIMARY_LLM`, `FALLBACK_LLM`
+  - [x] Add query settings: `TOP_K_CHUNKS`, `MIN_RELEVANCE_SCORE`
+  - [x] Update `.env.example` with new required variables
+  - [x] Add `OPENAI_API_KEY` to local `.env` file
+  - [x] Test settings load correctly when app starts
 
 - [ ] **Slice 1.4: Create RAG Module Structure**
   - [ ] Create `src/rag/__init__.py` with module exports
