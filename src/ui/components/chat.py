@@ -59,6 +59,30 @@ class ChatComponent:
             st.session_state.messages = []
             logger.info("Initialized empty chat history in session state")
 
+        # Initialize processing flag
+        if "processing_query" not in st.session_state:
+            st.session_state.processing_query = False
+
+        # Check if we need to process a pending query
+        if st.session_state.processing_query:
+            # Get the last user message (the pending query)
+            last_message = st.session_state.messages[-1]
+            if last_message["role"] == "user":
+                # Display all messages up to this point
+                for message in st.session_state.messages:
+                    self._render_message(message)
+
+                # Show spinner and process the query
+                with st.spinner("Thinking..."):
+                    self._process_query(last_message["content"])
+
+                # Reset processing flag
+                st.session_state.processing_query = False
+                st.rerun()
+            else:
+                # Something went wrong, reset flag
+                st.session_state.processing_query = False
+
         # Show example questions if chat history is empty
         if not st.session_state.messages:
             self._show_example_questions()
@@ -99,7 +123,7 @@ class ChatComponent:
                 self._handle_user_input(examples[3])
 
     def _handle_user_input(self, user_message: str) -> None:
-        """Handle user input by querying the RAG engine and updating chat history.
+        """Handle user input by adding message to chat and triggering processing.
 
         Args:
             user_message: The user's question or message
@@ -108,7 +132,7 @@ class ChatComponent:
             logger.warning("Empty user message received")
             return
 
-        logger.info(f"Processing user message: {user_message[:100]}...")
+        logger.info(f"Received user message: {user_message[:100]}...")
 
         # Add user message to session state
         user_msg: ChatMessage = {
@@ -118,7 +142,20 @@ class ChatComponent:
         }
         st.session_state.messages.append(user_msg)
 
-        # Query the RAG engine
+        # Set processing flag to trigger query on next render
+        st.session_state.processing_query = True
+
+        # Rerun to display the question and show spinner
+        st.rerun()
+
+    def _process_query(self, user_message: str) -> None:
+        """Process a query using the RAG engine and add response to chat.
+
+        Args:
+            user_message: The user's question to process
+        """
+        logger.info(f"Processing query: {user_message[:100]}...")
+
         try:
             # Call query engine
             result = self.query_engine.query(user_message)  # type: ignore[union-attr]
@@ -146,9 +183,6 @@ class ChatComponent:
                 "sources": None,
             }
             st.session_state.messages.append(error_msg)
-
-        # Force Streamlit to rerun and display messages in correct order
-        st.rerun()
 
     def _render_message(self, message: ChatMessage) -> None:
         """Render a single chat message with optional sources.
