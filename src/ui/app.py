@@ -11,6 +11,8 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.config.settings import settings
 from src.pdf_processor.logging_config import setup_logging
+from src.rag.embedder import EmbeddingGenerator
+from src.rag.vector_store import VectorStoreManager
 from src.ui.components.upload import PDFUploadComponent
 
 # Initialize logging
@@ -39,6 +41,42 @@ def check_qdrant_connection() -> bool:
     except (UnexpectedResponse, ConnectionError, TimeoutError, Exception) as e:
         logger.warning(f"Failed to connect to Qdrant: {str(e)}")
         return False
+
+
+def initialize_rag_components() -> tuple[EmbeddingGenerator | None, VectorStoreManager | None]:
+    """Initialize RAG components (embedder and vector store).
+
+    Returns:
+        Tuple of (embedder, vector_store). Both will be None if initialization fails.
+    """
+    try:
+        # Check if API key is configured
+        if not settings.OPENAI_API_KEY:
+            logger.warning("OPENAI_API_KEY not configured, RAG indexing disabled")
+            return None, None
+
+        # Initialize embedding generator
+        embedder = EmbeddingGenerator(
+            embedding_model=settings.EMBEDDING_MODEL,
+            api_key=settings.OPENAI_API_KEY,
+        )
+        logger.info(f"Initialized EmbeddingGenerator with model {settings.EMBEDDING_MODEL}")
+
+        # Initialize vector store
+        vector_store = VectorStoreManager(
+            host=settings.QDRANT_HOST,
+            port=settings.QDRANT_PORT,
+            collection_name=settings.QDRANT_COLLECTION,
+        )
+        logger.info(
+            f"Initialized VectorStoreManager connected to {settings.QDRANT_HOST}:{settings.QDRANT_PORT}"
+        )
+
+        return embedder, vector_store
+
+    except Exception as e:
+        logger.warning(f"Failed to initialize RAG components: {str(e)}")
+        return None, None
 
 
 def render_chat_placeholder() -> None:
@@ -108,12 +146,29 @@ def main() -> None:
     # Display main title
     st.title("FinanceIQ - Financial Document Analysis")
 
+    # Initialize RAG components
+    embedder, vector_store = initialize_rag_components()
+
+    # Show RAG status in sidebar
+    with st.sidebar:
+        st.subheader("System Status")
+        if embedder and vector_store:
+            st.success("✓ RAG Indexing Enabled")
+            st.caption(f"Model: {settings.EMBEDDING_MODEL}")
+            st.caption(f"Vector DB: {settings.QDRANT_HOST}:{settings.QDRANT_PORT}")
+        else:
+            st.warning("⚠ RAG Indexing Disabled")
+            st.caption("Documents will be uploaded but not indexed for search")
+
     # Create tabs for different functionality
     tab1, tab2 = st.tabs(["📄 Upload Documents", "💬 Ask Questions"])
 
     with tab1:
-        # Render upload component
-        upload_component = PDFUploadComponent()
+        # Render upload component with RAG components
+        upload_component = PDFUploadComponent(
+            embedder=embedder,
+            vector_store=vector_store,
+        )
         upload_component.render()
 
     with tab2:

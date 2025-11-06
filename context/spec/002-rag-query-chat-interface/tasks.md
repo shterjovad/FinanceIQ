@@ -127,15 +127,15 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Test error when Qdrant unavailable (mock connection failure)
   - [x] Run tests: `pytest tests/rag/test_vector_store.py -v`
 
-- [ ] **Slice 3.5: Add Indexing Progress to Upload UI**
-  - [ ] Update `PDFUploadComponent` to show indexing progress
-  - [ ] After chunking, add spinner: "Generating embeddings..."
-  - [ ] Call `EmbeddingGenerator.embed_chunks()`
-  - [ ] Add spinner: "Storing in vector database..."
-  - [ ] Call `VectorStoreManager.upsert_chunks()`
-  - [ ] Show success message: "✓ Indexed 45 chunks in 3.2s. Ready for questions!"
-  - [ ] Handle errors gracefully: "⚠️ Indexing failed: [error message]"
-  - [ ] Test with real 10-K, verify chunks stored in Qdrant
+- [x] **Slice 3.5: Add Indexing Progress to Upload UI**
+  - [x] Update `PDFUploadComponent` to show indexing progress
+  - [x] After chunking, add spinner: "Generating embeddings..."
+  - [x] Call `EmbeddingGenerator.embed_chunks()`
+  - [x] Add spinner: "Storing in vector database..."
+  - [x] Call `VectorStoreManager.upsert_chunks()`
+  - [x] Show success message: "✓ Indexed 45 chunks in 3.2s. Ready for questions!"
+  - [x] Handle errors gracefully: "⚠️ Indexing failed: [error message]"
+  - [x] Test with real 10-K, verify chunks stored in Qdrant
 
 **Runnable Outcome**: Upload PDF → Document chunked → Embeddings generated → Stored in Qdrant → See success confirmation with chunk count.
 
