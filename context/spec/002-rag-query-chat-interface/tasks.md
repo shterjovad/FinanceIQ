@@ -176,16 +176,16 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Test guardrails (verify system prompt used correctly)
   - [x] Run tests: `pytest tests/rag/test_query_engine.py -v`
 
-- [ ] **Slice 4.4: Add Simple Query UI**
-  - [ ] Update "Ask Questions" tab to show text input: `st.text_input("Ask a question...")`
-  - [ ] Add submit button
-  - [ ] When submitted, show spinner: "Searching documents..."
-  - [ ] Initialize `RAGQueryEngine` with dependencies
-  - [ ] Call `query_engine.query(question)`
-  - [ ] Display answer in styled container
-  - [ ] Display sources below answer: show page numbers, snippet preview, relevance score
-  - [ ] Handle errors: display error message if query fails
-  - [ ] Test with real question: "What were the main revenue drivers?"
+- [x] **Slice 4.4: Add Simple Query UI**
+  - [x] Update "Ask Questions" tab to show text input: `st.text_input("Ask a question...")`
+  - [x] Add submit button
+  - [x] When submitted, show spinner: "Searching documents..."
+  - [x] Initialize `RAGQueryEngine` with dependencies
+  - [x] Call `query_engine.query(question)`
+  - [x] Display answer in styled container
+  - [x] Display sources below answer: show page numbers, snippet preview, relevance score
+  - [x] Handle errors: display error message if query fails
+  - [x] Test with real question: "What were the main revenue drivers?"
 
 **Runnable Outcome**: Ask single question → Get answer with page citations → Verify answer accuracy against source document.
 
