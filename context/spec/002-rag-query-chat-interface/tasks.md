@@ -160,12 +160,12 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Add error handling (raise `QueryError` on failures)
   - [x] Add logging throughout
 
-- [ ] **Slice 4.2: Test LiteLLM Integration**
-  - [ ] Create small test script to verify LiteLLM works with OpenAI
-  - [ ] Test primary model call (`gpt-4-turbo-preview`)
-  - [ ] Test fallback mechanism (simulate rate limit, verify fallback to `gpt-3.5-turbo`)
-  - [ ] Test error handling when both models fail
-  - [ ] Verify `OPENAI_API_KEY` is loaded correctly
+- [x] **Slice 4.2: Test LiteLLM Integration**
+  - [x] Create small test script to verify LiteLLM works with OpenAI
+  - [x] Test primary model call (`gpt-4-turbo-preview`)
+  - [x] Test fallback mechanism (simulate rate limit, verify fallback to `gpt-3.5-turbo`)
+  - [x] Test error handling when both models fail
+  - [x] Verify `OPENAI_API_KEY` is loaded correctly
 
 - [ ] **Slice 4.3: Unit Tests for Query Engine**
   - [ ] Create `tests/rag/test_query_engine.py`
