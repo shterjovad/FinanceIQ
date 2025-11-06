@@ -100,13 +100,13 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Add error handling (raise `EmbeddingError` on failures)
   - [x] Log batch progress for large documents
 
-- [ ] **Slice 3.2: Unit Tests for Embeddings**
-  - [ ] Create `tests/rag/test_embedder.py`
-  - [ ] Test embedding single chunk (verify 1536 dimensions)
-  - [ ] Test batch embedding (10 chunks)
-  - [ ] Test query embedding
-  - [ ] Mock OpenAI API to test retry logic
-  - [ ] Run tests: `pytest tests/rag/test_embedder.py -v`
+- [x] **Slice 3.2: Unit Tests for Embeddings**
+  - [x] Create `tests/rag/test_embedder.py`
+  - [x] Test embedding single chunk (verify 1536 dimensions)
+  - [x] Test batch embedding (10 chunks)
+  - [x] Test query embedding
+  - [x] Mock OpenAI API to test retry logic
+  - [x] Run tests: `pytest tests/rag/test_embedder.py -v`
 
 - [ ] **Slice 3.3: Implement VectorStoreManager**
   - [ ] Create `src/rag/vector_store.py` with `VectorStoreManager` class
