@@ -90,15 +90,15 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 3: Embeddings & Vector Storage
 **Goal**: Generate embeddings and store chunks in Qdrant so documents are indexed for search.
 
-- [ ] **Slice 3.1: Implement EmbeddingGenerator**
-  - [ ] Create `src/rag/embedder.py` with `EmbeddingGenerator` class
-  - [ ] Implement `__init__` with embedding model configuration
-  - [ ] Implement `embed_chunks(chunks: list[DocumentChunk]) -> list[DocumentChunk]` (batch processing, max 100 per call)
-  - [ ] Implement `embed_query(query: str) -> list[float]` for single query embedding
-  - [ ] Use OpenAI embeddings via LiteLLM: `from litellm import embedding`
-  - [ ] Add retry logic with exponential backoff (3 attempts)
-  - [ ] Add error handling (raise `EmbeddingError` on failures)
-  - [ ] Log batch progress for large documents
+- [x] **Slice 3.1: Implement EmbeddingGenerator**
+  - [x] Create `src/rag/embedder.py` with `EmbeddingGenerator` class
+  - [x] Implement `__init__` with embedding model configuration
+  - [x] Implement `embed_chunks(chunks: list[DocumentChunk]) -> list[DocumentChunk]` (batch processing, max 100 per call)
+  - [x] Implement `embed_query(query: str) -> list[float]` for single query embedding
+  - [x] Use OpenAI embeddings via LiteLLM: `from litellm import embedding`
+  - [x] Add retry logic with exponential backoff (3 attempts)
+  - [x] Add error handling (raise `EmbeddingError` on failures)
+  - [x] Log batch progress for large documents
 
 - [ ] **Slice 3.2: Unit Tests for Embeddings**
   - [ ] Create `tests/rag/test_embedder.py`
