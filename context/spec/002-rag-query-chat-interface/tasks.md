@@ -118,14 +118,14 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Add error handling (raise `VectorStoreError` if Qdrant unavailable)
   - [x] Add helpful error message: "Start Qdrant with: docker compose up -d"
 
-- [ ] **Slice 3.4: Unit Tests for Vector Store**
-  - [ ] Create `tests/rag/test_vector_store.py`
-  - [ ] Test collection creation
-  - [ ] Test upserting chunks (insert and verify count)
-  - [ ] Test search functionality (create test embedding, search, verify results)
-  - [ ] Test document deletion (insert, delete, verify gone)
-  - [ ] Test error when Qdrant unavailable (mock connection failure)
-  - [ ] Run tests: `pytest tests/rag/test_vector_store.py -v`
+- [x] **Slice 3.4: Unit Tests for Vector Store**
+  - [x] Create `tests/rag/test_vector_store.py`
+  - [x] Test collection creation
+  - [x] Test upserting chunks (insert and verify count)
+  - [x] Test search functionality (create test embedding, search, verify results)
+  - [x] Test document deletion (insert, delete, verify gone)
+  - [x] Test error when Qdrant unavailable (mock connection failure)
+  - [x] Run tests: `pytest tests/rag/test_vector_store.py -v`
 
 - [ ] **Slice 3.5: Add Indexing Progress to Upload UI**
   - [ ] Update `PDFUploadComponent` to show indexing progress
