@@ -10,6 +10,7 @@ from src.pdf_processor.models import UploadedFile
 from src.pdf_processor.service import PDFProcessingService
 from src.pdf_processor.storage import FileStorageManager
 from src.pdf_processor.validators import PDFValidator
+from src.rag.chunker import DocumentChunker
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,13 @@ class PDFUploadComponent:
             extractor=extractor,
             storage_manager=storage_manager,
         )
-        logger.debug("PDFUploadComponent initialized with PDFProcessingService")
+
+        # Create document chunker for chunk preview
+        self.chunker = DocumentChunker(
+            chunk_size=settings.CHUNK_SIZE,
+            chunk_overlap=settings.CHUNK_OVERLAP,
+        )
+        logger.debug("PDFUploadComponent initialized with PDFProcessingService and DocumentChunker")
 
     def render(self) -> None:
         """Render the file upload component and handle validation."""
@@ -117,6 +124,52 @@ class PDFUploadComponent:
                                 if len(result.document.extracted_text) > 1000:
                                     preview_text += "..."
                                 st.text(preview_text)
+
+                            # Display chunk preview
+                            try:
+                                chunks = self.chunker.chunk_document(result.document)
+
+                                with st.expander(
+                                    f"📑 Document Chunks (showing first 3 of {len(chunks)})"
+                                ):
+                                    st.write(f"**Total chunks created:** {len(chunks)}")
+                                    st.write(
+                                        f"**Chunk settings:** {settings.CHUNK_SIZE} tokens, {settings.CHUNK_OVERLAP} overlap"
+                                    )
+                                    st.markdown("---")
+
+                                    # Show first 3 chunks
+                                    for i, chunk in enumerate(chunks[:3]):
+                                        st.markdown(f"**Chunk {i + 1}**")
+
+                                        # Display chunk metadata in columns
+                                        col1, col2, col3 = st.columns(3)
+                                        with col1:
+                                            st.metric("Token Count", chunk.token_count)
+                                        with col2:
+                                            pages_str = ", ".join(map(str, chunk.page_numbers))
+                                            st.metric("Pages", pages_str)
+                                        with col3:
+                                            st.metric("Chunk Index", chunk.chunk_index)
+
+                                        # Display chunk content preview
+                                        chunk_preview = chunk.content[:300]
+                                        if len(chunk.content) > 300:
+                                            chunk_preview += "..."
+                                        st.text_area(
+                                            "Content Preview",
+                                            chunk_preview,
+                                            height=150,
+                                            key=f"chunk_{result.document.document_id}_{i}",
+                                            disabled=True,
+                                        )
+
+                                        if i < 2 and i < len(chunks) - 1:
+                                            st.markdown("---")
+                            except Exception as e:
+                                logger.warning(f"Failed to generate chunk preview: {str(e)}")
+                                # Don't fail the whole upload if chunking preview fails
+                                st.warning("⚠️ Could not generate chunk preview")
 
                         else:
                             # Failure case - display error message

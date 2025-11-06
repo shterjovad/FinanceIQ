@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION: str = "financial_docs"
 
     # LLM & Embeddings (via LiteLLM)
-    OPENAI_API_KEY: str  # Required from .env
+    OPENAI_API_KEY: str = ""  # Will be required for embeddings in Slice 3
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSION: int = 1536
     PRIMARY_LLM: str = "gpt-4-turbo-preview"

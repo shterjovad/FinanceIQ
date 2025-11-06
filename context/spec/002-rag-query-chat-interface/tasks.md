@@ -75,13 +75,13 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Test single-sentence document (edge case)
   - [x] Run tests: `pytest tests/rag/test_chunker.py -v`
 
-- [ ] **Slice 2.3: Add Chunk Preview to Upload UI**
-  - [ ] Update `PDFUploadComponent` to optionally show chunk preview
-  - [ ] After successful upload, call `DocumentChunker.chunk_document()`
-  - [ ] Display expandable section: "📑 Document Chunks (first 3)"
-  - [ ] Show chunk content, page numbers, token count for first 3 chunks
-  - [ ] Add total chunk count summary
-  - [ ] Test with real 10-K document, verify chunks make sense
+- [x] **Slice 2.3: Add Chunk Preview to Upload UI**
+  - [x] Update `PDFUploadComponent` to optionally show chunk preview
+  - [x] After successful upload, call `DocumentChunker.chunk_document()`
+  - [x] Display expandable section: "📑 Document Chunks (first 3)"
+  - [x] Show chunk content, page numbers, token count for first 3 chunks
+  - [x] Add total chunk count summary
+  - [x] Test with real 10-K document, verify chunks make sense
 
 **Runnable Outcome**: Upload PDF → See chunk preview with page numbers and token counts → Verify chunking works correctly.
 
