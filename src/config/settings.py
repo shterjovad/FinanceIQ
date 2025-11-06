@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     # Query Processing
     TOP_K_CHUNKS: int = 5  # Number of chunks to retrieve
-    MIN_RELEVANCE_SCORE: float = 0.7  # Minimum similarity threshold
+    MIN_RELEVANCE_SCORE: float = 0.5  # Minimum similarity threshold (0.5 = 50%)
 
     # Pydantic configuration
     model_config = SettingsConfigDict(

@@ -12,6 +12,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 from src.config.settings import settings
 from src.pdf_processor.logging_config import setup_logging
 from src.rag.embedder import EmbeddingGenerator
+from src.rag.query_engine import RAGQueryEngine
 from src.rag.vector_store import VectorStoreManager
 from src.ui.components.upload import PDFUploadComponent
 
@@ -79,57 +80,95 @@ def initialize_rag_components() -> tuple[EmbeddingGenerator | None, VectorStoreM
         return None, None
 
 
-def render_chat_placeholder() -> None:
-    """Render placeholder content for the Ask Questions tab."""
-    st.header("RAG Query System - Coming Soon!")
+def render_query_interface(query_engine: RAGQueryEngine | None) -> None:
+    """Render the query interface for asking questions.
 
-    # Display Qdrant connection status
-    st.subheader("System Status")
-    is_connected = check_qdrant_connection()
+    Args:
+        query_engine: RAGQueryEngine instance, or None if unavailable
+    """
+    st.header("Ask Questions About Your Documents")
 
-    if is_connected:
-        st.success(
-            f"✓ Connected to Qdrant vector database at {settings.QDRANT_HOST}:{settings.QDRANT_PORT}"
-        )
-    else:
+    if query_engine is None:
         st.warning(
-            f"⚠ Cannot connect to Qdrant at {settings.QDRANT_HOST}:{settings.QDRANT_PORT}. "
-            "Please ensure Qdrant is running:\n\n"
-            "```bash\n"
-            "docker compose up -d\n"
-            "```"
+            "⚠ Query engine unavailable. Please ensure:\n\n"
+            "1. Qdrant is running: `docker compose up -d`\n"
+            "2. OPENAI_API_KEY is configured in .env\n"
+            "3. Documents have been uploaded and indexed"
         )
+        return
 
-    # Display information about what's coming
+    # Example questions
+    st.markdown("**Example questions:**")
+    example_col1, example_col2 = st.columns(2)
+    with example_col1:
+        st.caption("• What were the main revenue drivers?")
+        st.caption("• What are the top risk factors?")
+    with example_col2:
+        st.caption("• How did operating expenses change?")
+        st.caption("• What is the company's cash position?")
+
     st.markdown("---")
-    st.info(
-        "🚀 **What's Coming:**\n\n"
-        "This tab will allow you to ask natural language questions about your uploaded financial documents. "
-        "The RAG (Retrieval-Augmented Generation) system will:\n\n"
-        "- Search through your document collection using semantic similarity\n"
-        "- Retrieve the most relevant passages to answer your question\n"
-        "- Generate accurate, context-aware answers using GPT-4\n"
-        "- Cite specific sources from your documents"
+
+    # Query input
+    question = st.text_input(
+        "Your question:",
+        placeholder="Ask a question about your uploaded documents...",
+        help="Ask any question about the financial documents you've uploaded",
     )
 
-    # Example questions section
-    st.subheader("Example Questions You'll Be Able to Ask")
-    st.markdown(
-        "- What was the company's revenue growth in the last quarter?\n"
-        "- What are the main risk factors mentioned in the 10-K?\n"
-        "- How much did R&D spending increase year-over-year?\n"
-        "- What were the key highlights from the earnings call?\n"
-        "- What is the company's cash position and liquidity?"
-    )
+    # Submit button
+    if st.button("🔍 Search", type="primary"):
+        if not question or not question.strip():
+            st.warning("Please enter a question")
+        else:
+            # Show spinner while processing
+            with st.spinner("Searching documents and generating answer..."):
+                try:
+                    # Query the engine
+                    result = query_engine.query(question)
+
+                    # Display answer
+                    st.markdown("### Answer")
+                    st.markdown(result.answer)
+
+                    # Display query time
+                    st.caption(f"⏱️ Query time: {result.query_time_seconds:.2f}s")
+
+                    # Display sources
+                    if result.sources:
+                        st.markdown("---")
+                        st.markdown("### 📚 Sources")
+
+                        for i, source in enumerate(result.sources, 1):
+                            with st.expander(
+                                f"Source {i} - Pages {', '.join(map(str, source.page_numbers))} "
+                                f"(Relevance: {source.relevance_score:.1%})"
+                            ):
+                                st.markdown(f"**Document ID:** `{source.document_id}`")
+                                st.markdown(
+                                    f"**Pages:** {', '.join(map(str, source.page_numbers))}"
+                                )
+                                st.markdown(
+                                    f"**Relevance Score:** {source.relevance_score:.4f} ({source.relevance_score:.1%})"
+                                )
+                                st.markdown("**Content Preview:**")
+                                st.text(source.snippet)
+                    else:
+                        st.info("No sources found for this query")
+
+                except Exception as e:
+                    logger.error(f"Query failed: {str(e)}", exc_info=True)
+                    st.error(f"❌ Query failed: {str(e)}")
 
     # Technical details in expander
-    with st.expander("🔧 Technical Details"):
+    with st.expander("🔧 System Configuration"):
         st.markdown(
-            f"**Vector Database:** Qdrant ({settings.QDRANT_HOST}:{settings.QDRANT_PORT})\n\n"
+            f"**Vector Database:** Qdrant @ {settings.QDRANT_HOST}:{settings.QDRANT_PORT}\n\n"
             f"**Embedding Model:** {settings.EMBEDDING_MODEL}\n\n"
-            f"**LLM Model:** {settings.PRIMARY_LLM}\n\n"
-            f"**Chunk Size:** {settings.CHUNK_SIZE} tokens\n\n"
-            f"**Retrieval:** Top {settings.TOP_K_CHUNKS} chunks with minimum relevance {settings.MIN_RELEVANCE_SCORE}"
+            f"**Primary LLM:** {settings.PRIMARY_LLM}\n\n"
+            f"**Fallback LLM:** {settings.FALLBACK_LLM}\n\n"
+            f"**Retrieval Settings:** Top {settings.TOP_K_CHUNKS} chunks, "
+            f"min relevance {settings.MIN_RELEVANCE_SCORE}"
         )
 
 
@@ -149,16 +188,35 @@ def main() -> None:
     # Initialize RAG components
     embedder, vector_store = initialize_rag_components()
 
+    # Initialize query engine if RAG components available
+    query_engine = None
+    if embedder and vector_store:
+        try:
+            query_engine = RAGQueryEngine(
+                vector_store=vector_store,
+                embedder=embedder,
+                primary_llm=settings.PRIMARY_LLM,
+                fallback_llm=settings.FALLBACK_LLM,
+                temperature=settings.LLM_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
+                top_k=settings.TOP_K_CHUNKS,
+                min_score=settings.MIN_RELEVANCE_SCORE,
+            )
+            logger.info("Initialized RAGQueryEngine")
+        except Exception as e:
+            logger.warning(f"Failed to initialize query engine: {str(e)}")
+
     # Show RAG status in sidebar
     with st.sidebar:
         st.subheader("System Status")
-        if embedder and vector_store:
-            st.success("✓ RAG Indexing Enabled")
+        if query_engine:
+            st.success("✓ RAG System Ready")
             st.caption(f"Model: {settings.EMBEDDING_MODEL}")
             st.caption(f"Vector DB: {settings.QDRANT_HOST}:{settings.QDRANT_PORT}")
+            st.caption(f"LLM: {settings.PRIMARY_LLM}")
         else:
-            st.warning("⚠ RAG Indexing Disabled")
-            st.caption("Documents will be uploaded but not indexed for search")
+            st.warning("⚠ RAG System Unavailable")
+            st.caption("Documents can be uploaded but queries unavailable")
 
     # Create tabs for different functionality
     tab1, tab2 = st.tabs(["📄 Upload Documents", "💬 Ask Questions"])
@@ -172,8 +230,8 @@ def main() -> None:
         upload_component.render()
 
     with tab2:
-        # Render chat placeholder
-        render_chat_placeholder()
+        # Render query interface
+        render_query_interface(query_engine)
 
 
 if __name__ == "__main__":

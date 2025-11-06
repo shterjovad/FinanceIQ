@@ -144,48 +144,48 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 4: Basic Query Engine (Single Question)
 **Goal**: Implement query processing to answer one question at a time (not chat yet) with source citations.
 
-- [ ] **Slice 4.1: Implement RAGQueryEngine**
-  - [ ] Create `src/rag/query_engine.py` with `RAGQueryEngine` class
-  - [ ] Implement `__init__` with dependencies (vector_store, embedder, llm_model, fallback_model)
-  - [ ] Implement `_create_prompt_template()` with system prompt including guardrails
-  - [ ] System prompt rules: answer only from context, cite sources with [Page X], refuse if no context
-  - [ ] Implement `query(question: str) -> QueryResult`
-  - [ ] Step 1: Embed query using `embedder.embed_query()`
-  - [ ] Step 2: Search vector store for top-K chunks
-  - [ ] Step 3: Check if minimum relevance score met, else return "no information found"
-  - [ ] Step 4: Format context with page citations: `[Page X]: {chunk.content}`
-  - [ ] Step 5: Call LLM via LiteLLM with `completion()` and fallback configuration
-  - [ ] Step 6: Extract sources from retrieved chunks into `SourceCitation` objects
-  - [ ] Step 7: Return `QueryResult` with answer and sources
-  - [ ] Add error handling (raise `QueryError` on failures)
-  - [ ] Add logging throughout
+- [x] **Slice 4.1: Implement RAGQueryEngine**
+  - [x] Create `src/rag/query_engine.py` with `RAGQueryEngine` class
+  - [x] Implement `__init__` with dependencies (vector_store, embedder, llm_model, fallback_model)
+  - [x] Implement `_create_prompt_template()` with system prompt including guardrails
+  - [x] System prompt rules: answer only from context, cite sources with [Page X], refuse if no context
+  - [x] Implement `query(question: str) -> QueryResult`
+  - [x] Step 1: Embed query using `embedder.embed_query()`
+  - [x] Step 2: Search vector store for top-K chunks
+  - [x] Step 3: Check if minimum relevance score met, else return "no information found"
+  - [x] Step 4: Format context with page citations: `[Page X]: {chunk.content}`
+  - [x] Step 5: Call LLM via LiteLLM with `completion()` and fallback configuration
+  - [x] Step 6: Extract sources from retrieved chunks into `SourceCitation` objects
+  - [x] Step 7: Return `QueryResult` with answer and sources
+  - [x] Add error handling (raise `QueryError` on failures)
+  - [x] Add logging throughout
 
-- [ ] **Slice 4.2: Test LiteLLM Integration**
-  - [ ] Create small test script to verify LiteLLM works with OpenAI
-  - [ ] Test primary model call (`gpt-4-turbo-preview`)
-  - [ ] Test fallback mechanism (simulate rate limit, verify fallback to `gpt-3.5-turbo`)
-  - [ ] Test error handling when both models fail
-  - [ ] Verify `OPENAI_API_KEY` is loaded correctly
+- [x] **Slice 4.2: Test LiteLLM Integration**
+  - [x] Create small test script to verify LiteLLM works with OpenAI
+  - [x] Test primary model call (`gpt-4-turbo-preview`)
+  - [x] Test fallback mechanism (simulate rate limit, verify fallback to `gpt-3.5-turbo`)
+  - [x] Test error handling when both models fail
+  - [x] Verify `OPENAI_API_KEY` is loaded correctly
 
-- [ ] **Slice 4.3: Unit Tests for Query Engine**
-  - [ ] Create `tests/rag/test_query_engine.py`
-  - [ ] Test successful query with relevant chunks (mock vector store results)
-  - [ ] Test query with no relevant chunks (verify refusal message)
-  - [ ] Test source citation extraction
-  - [ ] Test LLM fallback mechanism (mock primary failure)
-  - [ ] Test guardrails (verify system prompt used correctly)
-  - [ ] Run tests: `pytest tests/rag/test_query_engine.py -v`
+- [x] **Slice 4.3: Unit Tests for Query Engine**
+  - [x] Create `tests/rag/test_query_engine.py`
+  - [x] Test successful query with relevant chunks (mock vector store results)
+  - [x] Test query with no relevant chunks (verify refusal message)
+  - [x] Test source citation extraction
+  - [x] Test LLM fallback mechanism (mock primary failure)
+  - [x] Test guardrails (verify system prompt used correctly)
+  - [x] Run tests: `pytest tests/rag/test_query_engine.py -v`
 
-- [ ] **Slice 4.4: Add Simple Query UI**
-  - [ ] Update "Ask Questions" tab to show text input: `st.text_input("Ask a question...")`
-  - [ ] Add submit button
-  - [ ] When submitted, show spinner: "Searching documents..."
-  - [ ] Initialize `RAGQueryEngine` with dependencies
-  - [ ] Call `query_engine.query(question)`
-  - [ ] Display answer in styled container
-  - [ ] Display sources below answer: show page numbers, snippet preview, relevance score
-  - [ ] Handle errors: display error message if query fails
-  - [ ] Test with real question: "What were the main revenue drivers?"
+- [x] **Slice 4.4: Add Simple Query UI**
+  - [x] Update "Ask Questions" tab to show text input: `st.text_input("Ask a question...")`
+  - [x] Add submit button
+  - [x] When submitted, show spinner: "Searching documents..."
+  - [x] Initialize `RAGQueryEngine` with dependencies
+  - [x] Call `query_engine.query(question)`
+  - [x] Display answer in styled container
+  - [x] Display sources below answer: show page numbers, snippet preview, relevance score
+  - [x] Handle errors: display error message if query fails
+  - [x] Test with real question: "What were the main revenue drivers?"
 
 **Runnable Outcome**: Ask single question → Get answer with page citations → Verify answer accuracy against source document.
 
