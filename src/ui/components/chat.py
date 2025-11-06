@@ -118,44 +118,37 @@ class ChatComponent:
         }
         st.session_state.messages.append(user_msg)
 
-        # Display user message immediately
-        self._render_message(user_msg)
+        # Query the RAG engine
+        try:
+            # Call query engine
+            result = self.query_engine.query(user_message)  # type: ignore[union-attr]
 
-        # Query the RAG engine with spinner
-        with st.spinner("Thinking..."):
-            try:
-                # Call query engine
-                result = self.query_engine.query(user_message)  # type: ignore[union-attr]
+            # Add assistant response to session state
+            assistant_msg: ChatMessage = {
+                "role": "assistant",
+                "content": result.answer,
+                "sources": result.sources,
+            }
+            st.session_state.messages.append(assistant_msg)
 
-                # Add assistant response to session state
-                assistant_msg: ChatMessage = {
-                    "role": "assistant",
-                    "content": result.answer,
-                    "sources": result.sources,
-                }
-                st.session_state.messages.append(assistant_msg)
+            logger.info(
+                f"Query completed in {result.query_time_seconds:.2f}s "
+                f"with {len(result.sources)} sources"
+            )
 
-                # Display assistant message
-                self._render_message(assistant_msg)
+        except Exception as e:
+            logger.error(f"Query failed: {str(e)}", exc_info=True)
 
-                logger.info(
-                    f"Query completed in {result.query_time_seconds:.2f}s "
-                    f"with {len(result.sources)} sources"
-                )
+            # Add error message to chat
+            error_msg: ChatMessage = {
+                "role": "assistant",
+                "content": f"❌ Sorry, I encountered an error: {str(e)}",
+                "sources": None,
+            }
+            st.session_state.messages.append(error_msg)
 
-            except Exception as e:
-                logger.error(f"Query failed: {str(e)}", exc_info=True)
-
-                # Add error message to chat
-                error_msg: ChatMessage = {
-                    "role": "assistant",
-                    "content": f"❌ Sorry, I encountered an error: {str(e)}",
-                    "sources": None,
-                }
-                st.session_state.messages.append(error_msg)
-
-                # Display error message
-                self._render_message(error_msg)
+        # Force Streamlit to rerun and display messages in correct order
+        st.rerun()
 
     def _render_message(self, message: ChatMessage) -> None:
         """Render a single chat message with optional sources.
