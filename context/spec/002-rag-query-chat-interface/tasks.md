@@ -108,15 +108,15 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Mock OpenAI API to test retry logic
   - [x] Run tests: `pytest tests/rag/test_embedder.py -v`
 
-- [ ] **Slice 3.3: Implement VectorStoreManager**
-  - [ ] Create `src/rag/vector_store.py` with `VectorStoreManager` class
-  - [ ] Implement `__init__` to connect to Qdrant and ensure collection exists
-  - [ ] Implement `_ensure_collection_exists()` to create collection if needed (1536 dimensions, cosine distance)
-  - [ ] Implement `upsert_chunks(chunks: list[DocumentChunk]) -> int` to insert chunks with metadata
-  - [ ] Implement `search(query_embedding: list[float], top_k: int, min_score: float) -> list[SearchResult]`
-  - [ ] Implement `delete_document(document_id: str) -> bool` to remove all chunks for a document
-  - [ ] Add error handling (raise `VectorStoreError` if Qdrant unavailable)
-  - [ ] Add helpful error message: "Start Qdrant with: docker compose up -d"
+- [x] **Slice 3.3: Implement VectorStoreManager**
+  - [x] Create `src/rag/vector_store.py` with `VectorStoreManager` class
+  - [x] Implement `__init__` to connect to Qdrant and ensure collection exists
+  - [x] Implement `_ensure_collection_exists()` to create collection if needed (1536 dimensions, cosine distance)
+  - [x] Implement `upsert_chunks(chunks: list[DocumentChunk]) -> int` to insert chunks with metadata
+  - [x] Implement `search(query_embedding: list[float], top_k: int, min_score: float) -> list[SearchResult]`
+  - [x] Implement `delete_document(document_id: str) -> bool` to remove all chunks for a document
+  - [x] Add error handling (raise `VectorStoreError` if Qdrant unavailable)
+  - [x] Add helpful error message: "Start Qdrant with: docker compose up -d"
 
 - [ ] **Slice 3.4: Unit Tests for Vector Store**
   - [ ] Create `tests/rag/test_vector_store.py`
