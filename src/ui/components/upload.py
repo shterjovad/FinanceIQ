@@ -1,6 +1,7 @@
 """PDF upload UI component."""
 
 import logging
+import time
 
 import streamlit as st
 
@@ -10,6 +11,9 @@ from src.pdf_processor.models import UploadedFile
 from src.pdf_processor.service import PDFProcessingService
 from src.pdf_processor.storage import FileStorageManager
 from src.pdf_processor.validators import PDFValidator
+from src.rag.chunker import DocumentChunker
+from src.rag.embedder import EmbeddingGenerator
+from src.rag.vector_store import VectorStoreManager
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +21,17 @@ logger = logging.getLogger(__name__)
 class PDFUploadComponent:
     """Handles PDF file upload and validation UI."""
 
-    def __init__(self) -> None:
-        """Initialize the upload component."""
+    def __init__(
+        self,
+        embedder: EmbeddingGenerator | None = None,
+        vector_store: VectorStoreManager | None = None,
+    ) -> None:
+        """Initialize the upload component.
+
+        Args:
+            embedder: Optional embedding generator for document indexing
+            vector_store: Optional vector store manager for storing embeddings
+        """
         # Create validator instance with settings from config
         validator = PDFValidator(
             max_size_mb=settings.MAX_FILE_SIZE_MB,
@@ -35,7 +48,20 @@ class PDFUploadComponent:
             extractor=extractor,
             storage_manager=storage_manager,
         )
-        logger.debug("PDFUploadComponent initialized with PDFProcessingService")
+
+        # Create document chunker for chunk preview
+        self.chunker = DocumentChunker(
+            chunk_size=settings.CHUNK_SIZE,
+            chunk_overlap=settings.CHUNK_OVERLAP,
+        )
+
+        # Store RAG components (optional)
+        self.embedder = embedder
+        self.vector_store = vector_store
+
+        logger.debug(
+            f"PDFUploadComponent initialized (RAG enabled: {embedder is not None and vector_store is not None})"
+        )
 
     def render(self) -> None:
         """Render the file upload component and handle validation."""
@@ -117,6 +143,89 @@ class PDFUploadComponent:
                                 if len(result.document.extracted_text) > 1000:
                                     preview_text += "..."
                                 st.text(preview_text)
+
+                            # Display chunk preview
+                            try:
+                                chunks = self.chunker.chunk_document(result.document)
+
+                                with st.expander(
+                                    f"📑 Document Chunks (showing first 3 of {len(chunks)})"
+                                ):
+                                    st.write(f"**Total chunks created:** {len(chunks)}")
+                                    st.write(
+                                        f"**Chunk settings:** {settings.CHUNK_SIZE} tokens, {settings.CHUNK_OVERLAP} overlap"
+                                    )
+                                    st.markdown("---")
+
+                                    # Show first 3 chunks
+                                    for i, chunk in enumerate(chunks[:3]):
+                                        st.markdown(f"**Chunk {i + 1}**")
+
+                                        # Display chunk metadata in columns
+                                        col1, col2, col3 = st.columns(3)
+                                        with col1:
+                                            st.metric("Token Count", chunk.token_count)
+                                        with col2:
+                                            pages_str = ", ".join(map(str, chunk.page_numbers))
+                                            st.metric("Pages", pages_str)
+                                        with col3:
+                                            st.metric("Chunk Index", chunk.chunk_index)
+
+                                        # Display chunk content preview
+                                        chunk_preview = chunk.content[:300]
+                                        if len(chunk.content) > 300:
+                                            chunk_preview += "..."
+                                        st.text_area(
+                                            "Content Preview",
+                                            chunk_preview,
+                                            height=150,
+                                            key=f"chunk_{result.document.document_id}_{i}",
+                                            disabled=True,
+                                        )
+
+                                        if i < 2 and i < len(chunks) - 1:
+                                            st.markdown("---")
+                            except Exception as e:
+                                logger.warning(f"Failed to generate chunk preview: {str(e)}")
+                                # Don't fail the whole upload if chunking preview fails
+                                st.warning("⚠️ Could not generate chunk preview")
+
+                            # Index document if RAG components are available
+                            if self.embedder and self.vector_store:
+                                try:
+                                    indexing_start = time.time()
+
+                                    # Generate embeddings
+                                    with st.spinner("Generating embeddings..."):
+                                        chunks = self.chunker.chunk_document(result.document)
+                                        embedded_chunks = self.embedder.embed_chunks(chunks)
+                                        logger.info(
+                                            f"Generated embeddings for {len(embedded_chunks)} chunks"
+                                        )
+
+                                    # Store in vector database
+                                    with st.spinner("Storing in vector database..."):
+                                        chunk_count = self.vector_store.upsert_chunks(
+                                            embedded_chunks
+                                        )
+                                        logger.info(f"Stored {chunk_count} chunks in Qdrant")
+
+                                    indexing_time = time.time() - indexing_start
+
+                                    # Show success message
+                                    st.success(
+                                        f"✓ Indexed {chunk_count} chunks in {indexing_time:.2f}s. Ready for questions!"
+                                    )
+
+                                except Exception as e:
+                                    logger.error(
+                                        f"Failed to index document: {str(e)}", exc_info=True
+                                    )
+                                    st.warning(
+                                        f"⚠️ Indexing failed: {str(e)}\n\n"
+                                        "Document uploaded but not indexed for search. "
+                                        "You can still view the document but cannot ask questions."
+                                    )
 
                         else:
                             # Failure case - display error message

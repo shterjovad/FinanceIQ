@@ -57,31 +57,31 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 2: Document Chunking with Preview
 **Goal**: Implement document chunking and show chunk preview in UI so users can see their document is being processed.
 
-- [ ] **Slice 2.1: Implement DocumentChunker**
-  - [ ] Create `src/rag/chunker.py` with `DocumentChunker` class
-  - [ ] Implement `__init__` with LangChain `RecursiveCharacterTextSplitter`
-  - [ ] Implement `chunk_document(document: ExtractedDocument) -> list[DocumentChunk]`
-  - [ ] Add page number tracking by mapping character positions to pages
-  - [ ] Generate unique `chunk_id` (UUID) for each chunk
-  - [ ] Calculate `token_count` using tiktoken
-  - [ ] Add error handling for empty documents (raise `ChunkingError`)
-  - [ ] Add logging for chunk creation
+- [x] **Slice 2.1: Implement DocumentChunker**
+  - [x] Create `src/rag/chunker.py` with `DocumentChunker` class
+  - [x] Implement `__init__` with LangChain `RecursiveCharacterTextSplitter`
+  - [x] Implement `chunk_document(document: ExtractedDocument) -> list[DocumentChunk]`
+  - [x] Add page number tracking by mapping character positions to pages
+  - [x] Generate unique `chunk_id` (UUID) for each chunk
+  - [x] Calculate `token_count` using tiktoken
+  - [x] Add error handling for empty documents (raise `ChunkingError`)
+  - [x] Add logging for chunk creation
 
-- [ ] **Slice 2.2: Unit Tests for Chunking**
-  - [ ] Create `tests/rag/test_chunker.py`
-  - [ ] Test chunking a simple document (verify chunk count, overlap)
-  - [ ] Test page number tracking accuracy
-  - [ ] Test empty document handling (should raise `ChunkingError`)
-  - [ ] Test single-sentence document (edge case)
-  - [ ] Run tests: `pytest tests/rag/test_chunker.py -v`
+- [x] **Slice 2.2: Unit Tests for Chunking**
+  - [x] Create `tests/rag/test_chunker.py`
+  - [x] Test chunking a simple document (verify chunk count, overlap)
+  - [x] Test page number tracking accuracy
+  - [x] Test empty document handling (should raise `ChunkingError`)
+  - [x] Test single-sentence document (edge case)
+  - [x] Run tests: `pytest tests/rag/test_chunker.py -v`
 
-- [ ] **Slice 2.3: Add Chunk Preview to Upload UI**
-  - [ ] Update `PDFUploadComponent` to optionally show chunk preview
-  - [ ] After successful upload, call `DocumentChunker.chunk_document()`
-  - [ ] Display expandable section: "📑 Document Chunks (first 3)"
-  - [ ] Show chunk content, page numbers, token count for first 3 chunks
-  - [ ] Add total chunk count summary
-  - [ ] Test with real 10-K document, verify chunks make sense
+- [x] **Slice 2.3: Add Chunk Preview to Upload UI**
+  - [x] Update `PDFUploadComponent` to optionally show chunk preview
+  - [x] After successful upload, call `DocumentChunker.chunk_document()`
+  - [x] Display expandable section: "📑 Document Chunks (first 3)"
+  - [x] Show chunk content, page numbers, token count for first 3 chunks
+  - [x] Add total chunk count summary
+  - [x] Test with real 10-K document, verify chunks make sense
 
 **Runnable Outcome**: Upload PDF → See chunk preview with page numbers and token counts → Verify chunking works correctly.
 
@@ -90,52 +90,52 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 3: Embeddings & Vector Storage
 **Goal**: Generate embeddings and store chunks in Qdrant so documents are indexed for search.
 
-- [ ] **Slice 3.1: Implement EmbeddingGenerator**
-  - [ ] Create `src/rag/embedder.py` with `EmbeddingGenerator` class
-  - [ ] Implement `__init__` with embedding model configuration
-  - [ ] Implement `embed_chunks(chunks: list[DocumentChunk]) -> list[DocumentChunk]` (batch processing, max 100 per call)
-  - [ ] Implement `embed_query(query: str) -> list[float]` for single query embedding
-  - [ ] Use OpenAI embeddings via LiteLLM: `from litellm import embedding`
-  - [ ] Add retry logic with exponential backoff (3 attempts)
-  - [ ] Add error handling (raise `EmbeddingError` on failures)
-  - [ ] Log batch progress for large documents
+- [x] **Slice 3.1: Implement EmbeddingGenerator**
+  - [x] Create `src/rag/embedder.py` with `EmbeddingGenerator` class
+  - [x] Implement `__init__` with embedding model configuration
+  - [x] Implement `embed_chunks(chunks: list[DocumentChunk]) -> list[DocumentChunk]` (batch processing, max 100 per call)
+  - [x] Implement `embed_query(query: str) -> list[float]` for single query embedding
+  - [x] Use OpenAI embeddings via LiteLLM: `from litellm import embedding`
+  - [x] Add retry logic with exponential backoff (3 attempts)
+  - [x] Add error handling (raise `EmbeddingError` on failures)
+  - [x] Log batch progress for large documents
 
-- [ ] **Slice 3.2: Unit Tests for Embeddings**
-  - [ ] Create `tests/rag/test_embedder.py`
-  - [ ] Test embedding single chunk (verify 1536 dimensions)
-  - [ ] Test batch embedding (10 chunks)
-  - [ ] Test query embedding
-  - [ ] Mock OpenAI API to test retry logic
-  - [ ] Run tests: `pytest tests/rag/test_embedder.py -v`
+- [x] **Slice 3.2: Unit Tests for Embeddings**
+  - [x] Create `tests/rag/test_embedder.py`
+  - [x] Test embedding single chunk (verify 1536 dimensions)
+  - [x] Test batch embedding (10 chunks)
+  - [x] Test query embedding
+  - [x] Mock OpenAI API to test retry logic
+  - [x] Run tests: `pytest tests/rag/test_embedder.py -v`
 
-- [ ] **Slice 3.3: Implement VectorStoreManager**
-  - [ ] Create `src/rag/vector_store.py` with `VectorStoreManager` class
-  - [ ] Implement `__init__` to connect to Qdrant and ensure collection exists
-  - [ ] Implement `_ensure_collection_exists()` to create collection if needed (1536 dimensions, cosine distance)
-  - [ ] Implement `upsert_chunks(chunks: list[DocumentChunk]) -> int` to insert chunks with metadata
-  - [ ] Implement `search(query_embedding: list[float], top_k: int, min_score: float) -> list[SearchResult]`
-  - [ ] Implement `delete_document(document_id: str) -> bool` to remove all chunks for a document
-  - [ ] Add error handling (raise `VectorStoreError` if Qdrant unavailable)
-  - [ ] Add helpful error message: "Start Qdrant with: docker compose up -d"
+- [x] **Slice 3.3: Implement VectorStoreManager**
+  - [x] Create `src/rag/vector_store.py` with `VectorStoreManager` class
+  - [x] Implement `__init__` to connect to Qdrant and ensure collection exists
+  - [x] Implement `_ensure_collection_exists()` to create collection if needed (1536 dimensions, cosine distance)
+  - [x] Implement `upsert_chunks(chunks: list[DocumentChunk]) -> int` to insert chunks with metadata
+  - [x] Implement `search(query_embedding: list[float], top_k: int, min_score: float) -> list[SearchResult]`
+  - [x] Implement `delete_document(document_id: str) -> bool` to remove all chunks for a document
+  - [x] Add error handling (raise `VectorStoreError` if Qdrant unavailable)
+  - [x] Add helpful error message: "Start Qdrant with: docker compose up -d"
 
-- [ ] **Slice 3.4: Unit Tests for Vector Store**
-  - [ ] Create `tests/rag/test_vector_store.py`
-  - [ ] Test collection creation
-  - [ ] Test upserting chunks (insert and verify count)
-  - [ ] Test search functionality (create test embedding, search, verify results)
-  - [ ] Test document deletion (insert, delete, verify gone)
-  - [ ] Test error when Qdrant unavailable (mock connection failure)
-  - [ ] Run tests: `pytest tests/rag/test_vector_store.py -v`
+- [x] **Slice 3.4: Unit Tests for Vector Store**
+  - [x] Create `tests/rag/test_vector_store.py`
+  - [x] Test collection creation
+  - [x] Test upserting chunks (insert and verify count)
+  - [x] Test search functionality (create test embedding, search, verify results)
+  - [x] Test document deletion (insert, delete, verify gone)
+  - [x] Test error when Qdrant unavailable (mock connection failure)
+  - [x] Run tests: `pytest tests/rag/test_vector_store.py -v`
 
-- [ ] **Slice 3.5: Add Indexing Progress to Upload UI**
-  - [ ] Update `PDFUploadComponent` to show indexing progress
-  - [ ] After chunking, add spinner: "Generating embeddings..."
-  - [ ] Call `EmbeddingGenerator.embed_chunks()`
-  - [ ] Add spinner: "Storing in vector database..."
-  - [ ] Call `VectorStoreManager.upsert_chunks()`
-  - [ ] Show success message: "✓ Indexed 45 chunks in 3.2s. Ready for questions!"
-  - [ ] Handle errors gracefully: "⚠️ Indexing failed: [error message]"
-  - [ ] Test with real 10-K, verify chunks stored in Qdrant
+- [x] **Slice 3.5: Add Indexing Progress to Upload UI**
+  - [x] Update `PDFUploadComponent` to show indexing progress
+  - [x] After chunking, add spinner: "Generating embeddings..."
+  - [x] Call `EmbeddingGenerator.embed_chunks()`
+  - [x] Add spinner: "Storing in vector database..."
+  - [x] Call `VectorStoreManager.upsert_chunks()`
+  - [x] Show success message: "✓ Indexed 45 chunks in 3.2s. Ready for questions!"
+  - [x] Handle errors gracefully: "⚠️ Indexing failed: [error message]"
+  - [x] Test with real 10-K, verify chunks stored in Qdrant
 
 **Runnable Outcome**: Upload PDF → Document chunked → Embeddings generated → Stored in Qdrant → See success confirmation with chunk count.
 

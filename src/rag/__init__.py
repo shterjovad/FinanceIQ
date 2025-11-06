@@ -1,5 +1,6 @@
 """RAG (Retrieval-Augmented Generation) module for document querying."""
 
+from src.rag.embedder import EmbeddingGenerator
 from src.rag.exceptions import (
     ChunkingError,
     EmbeddingError,
@@ -28,4 +29,6 @@ __all__ = [
     "SourceCitation",
     "RAGResult",
     "ChatMessage",
+    # Components
+    "EmbeddingGenerator",
 ]
