@@ -194,46 +194,46 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 5: Full Chat Interface with History
 **Goal**: Replace single-question input with full conversational chat interface.
 
-- [ ] **Slice 5.1: Create ChatComponent**
-  - [ ] Create `src/ui/components/chat.py` with `ChatComponent` class
-  - [ ] Implement `__init__(rag_service)` constructor
-  - [ ] Implement `render(document_id: str | None = None)`
-  - [ ] Initialize chat history in `st.session_state.messages` if not exists
-  - [ ] Display chat header: "Ask Questions About Your Documents"
-  - [ ] Show example questions on first load using `_show_example_questions()`
-  - [ ] Iterate through `st.session_state.messages` and display each with `st.chat_message()`
-  - [ ] For assistant messages, show sources in expandable `st.expander("📚 View Sources")`
-  - [ ] Add chat input: `st.chat_input("Ask a question...")`
-  - [ ] When user sends message, display immediately and add to history
-  - [ ] Process query with spinner: "Searching documents..."
-  - [ ] Display assistant response and add to history
-  - [ ] Auto-scroll to latest message (Streamlit does this automatically)
+- [x] **Slice 5.1: Create ChatComponent**
+  - [x] Create `src/ui/components/chat.py` with `ChatComponent` class
+  - [x] Implement `__init__(rag_service)` constructor
+  - [x] Implement `render(document_id: str | None = None)`
+  - [x] Initialize chat history in `st.session_state.messages` if not exists
+  - [x] Display chat header: "Ask Questions About Your Documents"
+  - [x] Show example questions on first load using `_show_example_questions()`
+  - [x] Iterate through `st.session_state.messages` and display each with `st.chat_message()`
+  - [x] For assistant messages, show sources in expandable `st.expander("📚 View Sources")`
+  - [x] Add chat input: `st.chat_input("Ask a question...")`
+  - [x] When user sends message, display immediately and add to history
+  - [x] Process query with spinner: "Searching documents..."
+  - [x] Display assistant response and add to history
+  - [x] Auto-scroll to latest message (Streamlit does this automatically)
 
-- [ ] **Slice 5.2: Implement Example Questions**
-  - [ ] Implement `_show_example_questions()` method
-  - [ ] Display 3-4 example questions in `st.info()` box:
+- [x] **Slice 5.2: Implement Example Questions**
+  - [x] Implement `_show_example_questions()` method
+  - [x] Display 3-4 example questions in `st.info()` box:
     - "What were the main revenue drivers?"
     - "What are the top 3 risks mentioned?"
     - "How did operating expenses change?"
-  - [ ] Make examples clickable (use `st.button()` in columns) to auto-fill question
-  - [ ] Test clicking example question → input auto-filled → question submitted
+  - [x] Make examples clickable (use `st.button()` in columns) to auto-fill question
+  - [x] Test clicking example question → input auto-filled → question submitted
 
-- [ ] **Slice 5.3: Implement Source Citation Display**
-  - [ ] Implement `_display_sources(sources: list[SourceCitation])` method
-  - [ ] For each source, create container with:
+- [x] **Slice 5.3: Implement Source Citation Display**
+  - [x] Implement `_display_sources(sources: list[SourceCitation])` method
+  - [x] For each source, create container with:
     - Source number (1, 2, 3...)
     - Page numbers as metric: `st.metric("Pages", "5, 6")`
     - Relevance score as metric: `st.metric("Relevance", "87%")`
     - Snippet preview (first 200 characters)
-  - [ ] Add visual separators between sources
-  - [ ] Test with multi-source answer, verify sources display correctly
+  - [x] Add visual separators between sources
+  - [x] Test with multi-source answer, verify sources display correctly
 
-- [ ] **Slice 5.4: Replace Single Input with Chat UI**
-  - [ ] Update "Ask Questions" tab to use `ChatComponent.render()`
-  - [ ] Remove old single-question UI code
-  - [ ] Verify conversation history persists within session
-  - [ ] Test follow-up questions: "Tell me more about that" → verify context from previous messages
-  - [ ] Test page refresh → verify history resets (expected behavior)
+- [x] **Slice 5.4: Replace Single Input with Chat UI**
+  - [x] Update "Ask Questions" tab to use `ChatComponent.render()`
+  - [x] Remove old single-question UI code
+  - [x] Verify conversation history persists within session
+  - [x] Test follow-up questions: "Tell me more about that" → verify context from previous messages
+  - [x] Test page refresh → verify history resets (expected behavior)
 
 **Runnable Outcome**: Full conversational interface → Ask multiple questions → See history → View expandable sources → Verify follow-up questions work.
 
