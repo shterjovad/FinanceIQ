@@ -195,11 +195,15 @@ class EmbeddingGenerator:
 
             embeddings = []
             for item in response.data:
-                if not hasattr(item, "embedding"):
+                # Try attribute access first, then dictionary access
+                if hasattr(item, "embedding"):
+                    embeddings.append(item.embedding)
+                elif isinstance(item, dict) and "embedding" in item:
+                    embeddings.append(item["embedding"])
+                else:
                     raise EmbeddingError(
                         "Invalid response format: missing 'embedding' field in data item"
                     )
-                embeddings.append(item.embedding)
 
             if not embeddings:
                 raise EmbeddingError("No embeddings returned from API")
