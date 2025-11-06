@@ -144,21 +144,21 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 4: Basic Query Engine (Single Question)
 **Goal**: Implement query processing to answer one question at a time (not chat yet) with source citations.
 
-- [ ] **Slice 4.1: Implement RAGQueryEngine**
-  - [ ] Create `src/rag/query_engine.py` with `RAGQueryEngine` class
-  - [ ] Implement `__init__` with dependencies (vector_store, embedder, llm_model, fallback_model)
-  - [ ] Implement `_create_prompt_template()` with system prompt including guardrails
-  - [ ] System prompt rules: answer only from context, cite sources with [Page X], refuse if no context
-  - [ ] Implement `query(question: str) -> QueryResult`
-  - [ ] Step 1: Embed query using `embedder.embed_query()`
-  - [ ] Step 2: Search vector store for top-K chunks
-  - [ ] Step 3: Check if minimum relevance score met, else return "no information found"
-  - [ ] Step 4: Format context with page citations: `[Page X]: {chunk.content}`
-  - [ ] Step 5: Call LLM via LiteLLM with `completion()` and fallback configuration
-  - [ ] Step 6: Extract sources from retrieved chunks into `SourceCitation` objects
-  - [ ] Step 7: Return `QueryResult` with answer and sources
-  - [ ] Add error handling (raise `QueryError` on failures)
-  - [ ] Add logging throughout
+- [x] **Slice 4.1: Implement RAGQueryEngine**
+  - [x] Create `src/rag/query_engine.py` with `RAGQueryEngine` class
+  - [x] Implement `__init__` with dependencies (vector_store, embedder, llm_model, fallback_model)
+  - [x] Implement `_create_prompt_template()` with system prompt including guardrails
+  - [x] System prompt rules: answer only from context, cite sources with [Page X], refuse if no context
+  - [x] Implement `query(question: str) -> QueryResult`
+  - [x] Step 1: Embed query using `embedder.embed_query()`
+  - [x] Step 2: Search vector store for top-K chunks
+  - [x] Step 3: Check if minimum relevance score met, else return "no information found"
+  - [x] Step 4: Format context with page citations: `[Page X]: {chunk.content}`
+  - [x] Step 5: Call LLM via LiteLLM with `completion()` and fallback configuration
+  - [x] Step 6: Extract sources from retrieved chunks into `SourceCitation` objects
+  - [x] Step 7: Return `QueryResult` with answer and sources
+  - [x] Add error handling (raise `QueryError` on failures)
+  - [x] Add logging throughout
 
 - [ ] **Slice 4.2: Test LiteLLM Integration**
   - [ ] Create small test script to verify LiteLLM works with OpenAI
