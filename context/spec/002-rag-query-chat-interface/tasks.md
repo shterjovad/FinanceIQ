@@ -167,14 +167,14 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Test error handling when both models fail
   - [x] Verify `OPENAI_API_KEY` is loaded correctly
 
-- [ ] **Slice 4.3: Unit Tests for Query Engine**
-  - [ ] Create `tests/rag/test_query_engine.py`
-  - [ ] Test successful query with relevant chunks (mock vector store results)
-  - [ ] Test query with no relevant chunks (verify refusal message)
-  - [ ] Test source citation extraction
-  - [ ] Test LLM fallback mechanism (mock primary failure)
-  - [ ] Test guardrails (verify system prompt used correctly)
-  - [ ] Run tests: `pytest tests/rag/test_query_engine.py -v`
+- [x] **Slice 4.3: Unit Tests for Query Engine**
+  - [x] Create `tests/rag/test_query_engine.py`
+  - [x] Test successful query with relevant chunks (mock vector store results)
+  - [x] Test query with no relevant chunks (verify refusal message)
+  - [x] Test source citation extraction
+  - [x] Test LLM fallback mechanism (mock primary failure)
+  - [x] Test guardrails (verify system prompt used correctly)
+  - [x] Run tests: `pytest tests/rag/test_query_engine.py -v`
 
 - [ ] **Slice 4.4: Add Simple Query UI**
   - [ ] Update "Ask Questions" tab to show text input: `st.text_input("Ask a question...")`
