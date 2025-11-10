@@ -1,7 +1,6 @@
 """PDF upload UI component."""
 
 import logging
-import time
 
 import streamlit as st
 
@@ -12,8 +11,7 @@ from src.pdf_processor.service import PDFProcessingService
 from src.pdf_processor.storage import FileStorageManager
 from src.pdf_processor.validators import PDFValidator
 from src.rag.chunker import DocumentChunker
-from src.rag.embedder import EmbeddingGenerator
-from src.rag.vector_store import VectorStoreManager
+from src.rag.service import RAGService
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +21,12 @@ class PDFUploadComponent:
 
     def __init__(
         self,
-        embedder: EmbeddingGenerator | None = None,
-        vector_store: VectorStoreManager | None = None,
+        rag_service: RAGService | None = None,
     ) -> None:
         """Initialize the upload component.
 
         Args:
-            embedder: Optional embedding generator for document indexing
-            vector_store: Optional vector store manager for storing embeddings
+            rag_service: Optional RAG service for document indexing
         """
         # Create validator instance with settings from config
         validator = PDFValidator(
@@ -55,13 +51,10 @@ class PDFUploadComponent:
             chunk_overlap=settings.CHUNK_OVERLAP,
         )
 
-        # Store RAG components (optional)
-        self.embedder = embedder
-        self.vector_store = vector_store
+        # Store RAG service (optional)
+        self.rag_service = rag_service
 
-        logger.debug(
-            f"PDFUploadComponent initialized (RAG enabled: {embedder is not None and vector_store is not None})"
-        )
+        logger.debug(f"PDFUploadComponent initialized (RAG enabled: {rag_service is not None})")
 
     def render(self) -> None:
         """Render the file upload component and handle validation."""
@@ -190,42 +183,51 @@ class PDFUploadComponent:
                                 # Don't fail the whole upload if chunking preview fails
                                 st.warning("⚠️ Could not generate chunk preview")
 
-                            # Index document if RAG components are available
-                            if self.embedder and self.vector_store:
-                                try:
-                                    indexing_start = time.time()
-
-                                    # Generate embeddings
-                                    with st.spinner("Generating embeddings..."):
-                                        chunks = self.chunker.chunk_document(result.document)
-                                        embedded_chunks = self.embedder.embed_chunks(chunks)
-                                        logger.info(
-                                            f"Generated embeddings for {len(embedded_chunks)} chunks"
+                            # Index document if RAG service is available
+                            if self.rag_service:
+                                with st.spinner("Indexing document for search..."):
+                                    try:
+                                        # Process document through RAG service
+                                        rag_result = self.rag_service.process_document(
+                                            result.document
                                         )
 
-                                    # Store in vector database
-                                    with st.spinner("Storing in vector database..."):
-                                        chunk_count = self.vector_store.upsert_chunks(
-                                            embedded_chunks
+                                        if rag_result.success:
+                                            # Show success message
+                                            st.success(
+                                                f"✓ Indexed {rag_result.chunks_indexed} chunks in "
+                                                f"{rag_result.processing_time_seconds:.2f}s. "
+                                                f"You can now ask questions!"
+                                            )
+
+                                            # Store document ID in session state for chat reference
+                                            st.session_state.current_document_id = (
+                                                rag_result.document_id
+                                            )
+
+                                            logger.info(
+                                                f"Successfully indexed document {rag_result.document_id}: "
+                                                f"{rag_result.chunks_indexed} chunks"
+                                            )
+                                        else:
+                                            # Indexing failed
+                                            st.warning(
+                                                f"⚠️ Document uploaded but indexing failed: {rag_result.error_message}\n\n"
+                                                "You can still view the document but cannot ask questions."
+                                            )
+                                            logger.warning(
+                                                f"Document indexing failed: {rag_result.error_message}"
+                                            )
+
+                                    except Exception as e:
+                                        logger.error(
+                                            f"Unexpected error during indexing: {str(e)}",
+                                            exc_info=True,
                                         )
-                                        logger.info(f"Stored {chunk_count} chunks in Qdrant")
-
-                                    indexing_time = time.time() - indexing_start
-
-                                    # Show success message
-                                    st.success(
-                                        f"✓ Indexed {chunk_count} chunks in {indexing_time:.2f}s. Ready for questions!"
-                                    )
-
-                                except Exception as e:
-                                    logger.error(
-                                        f"Failed to index document: {str(e)}", exc_info=True
-                                    )
-                                    st.warning(
-                                        f"⚠️ Indexing failed: {str(e)}\n\n"
-                                        "Document uploaded but not indexed for search. "
-                                        "You can still view the document but cannot ask questions."
-                                    )
+                                        st.warning(
+                                            f"⚠️ Document uploaded but indexing failed: {str(e)}\n\n"
+                                            "You can still view the document but cannot ask questions."
+                                        )
 
                         else:
                             # Failure case - display error message

@@ -15,6 +15,7 @@ from src.rag.models import (
     RAGResult,
     SourceCitation,
 )
+from src.rag.service import RAGService
 
 __all__ = [
     # Exceptions
@@ -31,4 +32,5 @@ __all__ = [
     "ChatMessage",
     # Components
     "EmbeddingGenerator",
+    "RAGService",
 ]
