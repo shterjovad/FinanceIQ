@@ -4,7 +4,9 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
 
 ## Features
 
-### Current Features (Phase 1: Document Processing)
+### Current Features
+
+#### Document Processing
 - **PDF Upload & Validation**
   - Multi-file upload support with drag-and-drop interface
   - File size validation (configurable max: 50MB)
@@ -23,29 +25,52 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
   - Automatic filename collision handling
   - Metadata preservation (filename, page count, file size, extraction date)
 
-- **User Interface**
-  - Real-time progress indicators
-  - Interactive text preview (first 1000 characters)
-  - Comprehensive error messaging aligned with functional specs
-  - Responsive design with Streamlit
+#### RAG (Retrieval-Augmented Generation) System
+- **Document Chunking**
+  - Semantic-aware text chunking with configurable size and overlap
+  - Page number tracking for accurate citations
+  - Token counting for context management
+  - Preserves document structure across chunks
 
-- **Code Quality**
+- **Vector Embeddings & Storage**
+  - OpenAI text-embedding-3-small for high-quality embeddings
+  - Qdrant vector database for fast similarity search
+  - Automatic collection management
+  - Batch processing for efficient embedding generation
+
+- **Intelligent Query Engine**
+  - GPT-4-turbo for accurate answer generation
+  - Automatic fallback to GPT-3.5-turbo for reliability
+  - Relevance threshold filtering (configurable)
+  - Source citation with page numbers and relevance scores
+  - Query guardrails to prevent hallucinations
+
+- **Conversational Chat Interface**
+  - Full conversation history within session
+  - ChatGPT-style interface with message bubbles
+  - Real-time "Thinking..." indicators
+  - Expandable source citations per answer
+  - Clickable example questions to get started
+
+- **Service Orchestration**
+  - Clean RAGService layer coordinating all components
+  - Automatic error handling with structured results
+  - Performance monitoring and timing metrics
+  - Document lifecycle management (index/query/delete)
+
+#### Code Quality
+  - 96% test coverage across RAG module
+  - 111 unit tests + 16 integration tests + 9 E2E tests
   - 100% type hint coverage with mypy strict mode
   - Comprehensive error handling with custom exception hierarchy
-  - Structured logging
-  - Pytest test suite
+  - Structured logging throughout
   - Ruff linting and formatting (100% compliant)
 
 ### Roadmap (Future Phases)
-- **Phase 2**: Multi-Agent Intelligence & Query Decomposition
+- **Phase 2**: Multi-Agent Intelligence
   - LangGraph-based agent orchestration
   - Query analysis and decomposition
   - Multi-step reasoning system
-
-- **Phase 3**: RAG Core & Vector Database
-  - Document chunking with semantic awareness
-  - Vector embeddings with Qdrant
-  - Semantic search and retrieval
 
 ## Requirements
 
@@ -65,13 +90,24 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
    uv sync
    ```
 
-3. **Create `.env` file (optional):**
+3. **Start Qdrant vector database:**
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration if needed
+   docker compose up -d
    ```
 
-4. **Run the application:**
+   Verify Qdrant is running at `http://localhost:6333/dashboard`
+
+4. **Create `.env` file with your OpenAI API key:**
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` and add:
+   ```
+   OPENAI_API_KEY=sk-your-api-key-here
+   ```
+
+5. **Run the application:**
    ```bash
    ./run.sh
    ```
@@ -81,8 +117,13 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
    PYTHONPATH=. uv run streamlit run src/ui/app.py
    ```
 
-5. **Open your browser:**
+6. **Open your browser:**
    Navigate to `http://localhost:8501`
+
+7. **Upload and query documents:**
+   - Go to "Upload Documents" tab and upload a PDF (e.g., 10-K report)
+   - Wait for indexing to complete (~10-30s depending on document size)
+   - Go to "Ask Questions" tab and start chatting with your document!
 
 ## Project Structure
 
@@ -128,6 +169,17 @@ Configuration is managed via environment variables in `.env` file:
 | `UPLOAD_DIR` | Directory for uploaded files | data/uploads |
 | `LOG_DIR` | Directory for log files | logs |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | INFO |
+| `OPENAI_API_KEY` | OpenAI API key for embeddings and LLM | **Required** |
+| `QDRANT_HOST` | Qdrant vector database host | localhost |
+| `QDRANT_PORT` | Qdrant vector database port | 6333 |
+| `QDRANT_COLLECTION` | Qdrant collection name | financial_docs |
+| `EMBEDDING_MODEL` | OpenAI embedding model | text-embedding-3-small |
+| `PRIMARY_LLM` | Primary LLM for answer generation | gpt-4-turbo-preview |
+| `FALLBACK_LLM` | Fallback LLM if primary fails | gpt-3.5-turbo |
+| `CHUNK_SIZE` | Document chunk size (tokens) | 1000 |
+| `CHUNK_OVERLAP` | Chunk overlap (tokens) | 200 |
+| `TOP_K_CHUNKS` | Number of chunks to retrieve per query | 5 |
+| `MIN_RELEVANCE_SCORE` | Minimum similarity score (0-1) | 0.5 |
 
 ## Development
 
@@ -135,11 +187,17 @@ Configuration is managed via environment variables in `.env` file:
 
 - **Frontend**: [Streamlit](https://streamlit.io/) - Fast web UI framework for ML/AI applications
 - **PDF Processing**: [pypdf](https://pypdf.readthedocs.io/) - PDF text extraction library
+- **RAG Components**:
+  - [LiteLLM](https://www.litellm.ai/) - Unified LLM API with automatic fallbacks
+  - [Qdrant](https://qdrant.tech/) - High-performance vector database
+  - [OpenAI](https://openai.com/) - Embeddings (text-embedding-3-small) and LLM (GPT-4-turbo)
+  - [LangChain](https://www.langchain.com/) - Document chunking and text processing
+  - [tiktoken](https://github.com/openai/tiktoken) - Token counting for OpenAI models
 - **Data Validation**: [Pydantic](https://docs.pydantic.dev/) - Runtime type checking and data validation
 - **Package Management**: [uv](https://github.com/astral-sh/uv) - Fast Python package manager
 - **Type Checking**: [mypy](http://mypy-lang.org/) - Static type checker (strict mode enabled)
 - **Linting/Formatting**: [ruff](https://docs.astral.sh/ruff/) - Fast Python linter and formatter
-- **Testing**: [pytest](https://docs.pytest.org/) - Testing framework
+- **Testing**: [pytest](https://docs.pytest.org/) - Testing framework with 96% coverage
 
 ### Development Setup
 
