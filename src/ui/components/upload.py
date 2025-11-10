@@ -64,6 +64,10 @@ class PDFUploadComponent:
             "10-K reports, earnings reports, or other financial statements."
         )
 
+        # Initialize session state for tracking indexed documents
+        if "indexed_documents" not in st.session_state:
+            st.session_state.indexed_documents = set()
+
         # File uploader - supports multiple files
         uploaded_files = st.file_uploader(
             "Choose PDF file(s)",
@@ -77,6 +81,13 @@ class PDFUploadComponent:
 
             # Process each uploaded file
             for uploaded_file in uploaded_files:
+                # Create unique identifier for this file (name + size)
+                file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+
+                # Skip if already processed in this session
+                if file_id in st.session_state.indexed_documents:
+                    logger.debug(f"Skipping already indexed file: {uploaded_file.name}")
+                    continue
                 # Use expander for each file's processing
                 with st.container():
                     st.markdown(f"### {uploaded_file.name}")
@@ -205,6 +216,9 @@ class PDFUploadComponent:
                                                 rag_result.document_id
                                             )
 
+                                            # Mark this file as indexed
+                                            st.session_state.indexed_documents.add(file_id)
+
                                             logger.info(
                                                 f"Successfully indexed document {rag_result.document_id}: "
                                                 f"{rag_result.chunks_indexed} chunks"
@@ -228,6 +242,9 @@ class PDFUploadComponent:
                                             f"⚠️ Document uploaded but indexing failed: {str(e)}\n\n"
                                             "You can still view the document but cannot ask questions."
                                         )
+                            else:
+                                # No RAG service - mark as processed anyway
+                                st.session_state.indexed_documents.add(file_id)
 
                         else:
                             # Failure case - display error message
