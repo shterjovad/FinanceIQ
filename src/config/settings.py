@@ -46,6 +46,21 @@ class Settings(BaseSettings):
     TOP_K_CHUNKS: int = 5  # Number of chunks to retrieve
     MIN_RELEVANCE_SCORE: float = 0.5  # Minimum similarity threshold (0.5 = 50%)
 
+    # === AGENT SETTINGS (Phase 2) ===
+
+    # Agent Feature Flags
+    USE_AGENTS: bool = False  # Enable multi-agent query decomposition (default off)
+
+    # Agent Models
+    AGENT_ROUTER_MODEL: str = "gpt-3.5-turbo"  # Cheaper/faster for classification
+    AGENT_DECOMPOSER_MODEL: str = "gpt-4-turbo-preview"  # Better reasoning for decomposition
+    AGENT_SYNTHESIZER_MODEL: str = "gpt-4-turbo-preview"  # Quality matters for synthesis
+
+    # Agent Configuration
+    MAX_SUB_QUERIES: int = 5  # Maximum number of sub-queries for complex questions
+    AGENT_TIMEOUT_SECONDS: int = 30  # Maximum time for agent workflow
+    ENABLE_REASONING_DISPLAY: bool = True  # Show reasoning steps in UI by default
+
     # Pydantic configuration
     model_config = SettingsConfigDict(
         env_file=".env",
