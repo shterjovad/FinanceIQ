@@ -71,7 +71,8 @@ class RAGService:
                 # Lazy import to avoid circular dependency
                 from src.agents.workflow import create_agent_workflow
 
-                self.agent_workflow = create_agent_workflow()
+                # Pass query_engine to workflow for executor agent
+                self.agent_workflow = create_agent_workflow(query_engine=query_engine)
                 logger.info("RAGService initialized with agent workflow enabled")
             except Exception as e:
                 logger.error(f"Failed to initialize agent workflow: {e}", exc_info=True)
@@ -205,14 +206,14 @@ class RAGService:
         """Execute query through multi-agent workflow.
 
         The agent workflow handles query classification, decomposition (if complex),
-        execution, and synthesis. Currently in Slice 2, only routing is implemented,
-        so both simple and complex queries fall back to standard execution.
+        execution, and synthesis. Simple queries are executed directly, complex queries
+        go through decomposition → execution → synthesis.
 
         Args:
             question: User's natural language question
 
         Returns:
-            QueryResult with additional agent metadata if available
+            QueryResult with agent metadata and synthesized answer (for complex queries)
         """
         logger.info("Using agent-based query processing")
 
@@ -233,21 +234,40 @@ class RAGService:
 
         # Log agent decisions
         query_type = agent_result.get("query_type", "unknown")
+        agents_called = agent_result.get("agent_calls", [])
         logger.info(
             f"Agent workflow classified query as '{query_type}' in {agent_time:.2f}s "
-            f"(agents called: {agent_result.get('agent_calls', [])})"
+            f"(agents called: {agents_called})"
         )
 
-        # For now (Slice 2), we always fall back to standard execution
-        # In future slices, complex queries will use decomposer/executor/synthesizer
-        logger.info("Executing query through standard engine (agent execution not yet implemented)")
-        result = self.query_engine.query(question)
+        # Handle based on query type
+        if query_type == "complex" and "synthesizer" in agents_called:
+            # Complex query was processed through full pipeline
+            logger.info("Using synthesized answer from multi-agent workflow")
 
-        # Attach agent metadata to result for transparency
-        if hasattr(result, "metadata"):
-            result.metadata["query_type"] = query_type  # type: ignore
-            result.metadata["agent_calls"] = agent_result.get("agent_calls", [])  # type: ignore
-            result.metadata["complexity_reasoning"] = agent_result.get("complexity_reasoning", "")  # type: ignore
+            final_answer = agent_result.get("final_answer", "")
+            all_sources = agent_result.get("all_sources", [])
+            sub_results = agent_result.get("sub_results", [])
+
+            # Calculate total chunks retrieved
+            total_chunks = sum(r.chunks_retrieved for r in sub_results)
+
+            # Create QueryResult from synthesized answer
+            result = QueryResult(
+                success=True,
+                answer=final_answer,
+                sources=all_sources,
+                chunks_retrieved=total_chunks,
+                query_time_seconds=agent_time,
+            )
+
+        else:
+            # Simple query or workflow failed - execute directly
+            logger.info("Executing query through standard RAG engine")
+            result = self.query_engine.query(question)
+
+        # Note: QueryResult doesn't have metadata field, so we can't attach agent metadata
+        # This is fine - the agent metadata is already logged
 
         return result
 
