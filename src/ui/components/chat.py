@@ -1,12 +1,12 @@
 """Chat component for conversational RAG interface."""
 
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import streamlit as st
 
 from src.rag.models import SourceCitation
-from src.rag.query_engine import RAGQueryEngine
+from src.rag.service import RAGService
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,8 @@ class ChatMessage(TypedDict):
     role: str
     content: str
     sources: list[SourceCitation] | None
+    reasoning_steps: list[dict[str, Any]] | None
+    query_type: str | None
 
 
 class ChatComponent:
@@ -26,26 +28,27 @@ class ChatComponent:
     - Persistent chat history
     - Example questions for new sessions
     - Source citations in expandable sections
+    - Agent reasoning steps display (when multi-agent mode is enabled)
     - Error handling for unavailable services
     """
 
-    def __init__(self, query_engine: RAGQueryEngine | None) -> None:
+    def __init__(self, rag_service: RAGService | None) -> None:
         """Initialize the chat component.
 
         Args:
-            query_engine: RAGQueryEngine instance for processing queries, or None if unavailable
+            rag_service: RAGService instance for processing queries, or None if unavailable
         """
-        self.query_engine = query_engine
+        self.rag_service = rag_service
         logger.debug(
-            f"ChatComponent initialized (query_engine available: {query_engine is not None})"
+            f"ChatComponent initialized (rag_service available: {rag_service is not None})"
         )
 
     def render(self) -> None:
         """Render the chat interface with history and input."""
         st.header("Chat with Your Documents")
 
-        # Check if query engine is available
-        if self.query_engine is None:
+        # Check if RAG service is available
+        if self.rag_service is None:
             st.warning(
                 "⚠ RAG system unavailable. Please ensure:\n\n"
                 "1. Qdrant is running: `docker compose up -d`\n"
@@ -139,6 +142,8 @@ class ChatComponent:
             "role": "user",
             "content": user_message,
             "sources": None,
+            "reasoning_steps": None,
+            "query_type": None,
         }
         st.session_state.messages.append(user_msg)
 
@@ -149,7 +154,7 @@ class ChatComponent:
         st.rerun()
 
     def _process_query(self, user_message: str) -> None:
-        """Process a query using the RAG engine and add response to chat.
+        """Process a query using the RAG service and add response to chat.
 
         Args:
             user_message: The user's question to process
@@ -157,21 +162,45 @@ class ChatComponent:
         logger.info(f"Processing query: {user_message[:100]}...")
 
         try:
-            # Call query engine
-            result = self.query_engine.query(user_message)  # type: ignore[union-attr]
+            # Temporarily override use_agents based on UI toggle
+            original_use_agents = self.rag_service.use_agents  # type: ignore[union-attr]
+            use_agents_from_ui = st.session_state.get("use_agents", False)
 
-            # Add assistant response to session state
-            assistant_msg: ChatMessage = {
-                "role": "assistant",
-                "content": result.answer,
-                "sources": result.sources,
-            }
-            st.session_state.messages.append(assistant_msg)
+            self.rag_service.use_agents = use_agents_from_ui  # type: ignore[union-attr]
 
-            logger.info(
-                f"Query completed in {result.query_time_seconds:.2f}s "
-                f"with {len(result.sources)} sources"
-            )
+            try:
+                # Call RAG service
+                result = self.rag_service.query(user_message)  # type: ignore[union-attr]
+
+                # Extract agent metadata if agents were used
+                reasoning_steps = None
+                query_type = None
+
+                if use_agents_from_ui and self.rag_service.agent_workflow:  # type: ignore[union-attr]
+                    # Get reasoning steps from last agent execution
+                    reasoning_steps, agent_query_type = self.rag_service.get_last_reasoning_steps()  # type: ignore[union-attr]
+
+                    if agent_query_type:
+                        query_type = "agent-processed"
+
+                # Add assistant response to session state
+                assistant_msg: ChatMessage = {
+                    "role": "assistant",
+                    "content": result.answer,
+                    "sources": result.sources,
+                    "reasoning_steps": reasoning_steps,
+                    "query_type": query_type,
+                }
+                st.session_state.messages.append(assistant_msg)
+
+                logger.info(
+                    f"Query completed in {result.query_time_seconds:.2f}s "
+                    f"with {len(result.sources)} sources"
+                )
+
+            finally:
+                # Restore original use_agents setting
+                self.rag_service.use_agents = original_use_agents  # type: ignore[union-attr]
 
         except Exception as e:
             logger.error(f"Query failed: {str(e)}", exc_info=True)
@@ -181,21 +210,33 @@ class ChatComponent:
                 "role": "assistant",
                 "content": f"❌ Sorry, I encountered an error: {str(e)}",
                 "sources": None,
+                "reasoning_steps": None,
+                "query_type": None,
             }
             st.session_state.messages.append(error_msg)
 
     def _render_message(self, message: ChatMessage) -> None:
-        """Render a single chat message with optional sources.
+        """Render a single chat message with optional sources and agent info.
 
         Args:
-            message: Message dictionary with role, content, and optional sources
+            message: Message dictionary with role, content, sources, and agent metadata
         """
         role = message["role"]
         content = message["content"]
         sources = message.get("sources")
+        query_type = message.get("query_type")
+        reasoning_steps = message.get("reasoning_steps")
 
         with st.chat_message(role):
+            # Show agent processing badge if applicable
+            if role == "assistant" and query_type == "agent-processed":
+                st.caption("🤖 Processed with multi-agent system")
+
             st.markdown(content)
+
+            # Display reasoning steps if available
+            if role == "assistant" and reasoning_steps:
+                self._display_reasoning_steps(reasoning_steps)
 
             # Display sources if available (only for assistant messages)
             if role == "assistant" and sources:
@@ -226,3 +267,57 @@ class ChatComponent:
                 )
                 st.markdown("**Content Preview:**")
                 st.text(source.snippet)
+
+    def _display_reasoning_steps(self, reasoning_steps: list[dict[str, Any]]) -> None:
+        """Display agent reasoning steps in expandable sections.
+
+        Args:
+            reasoning_steps: List of reasoning step dictionaries from agent workflow
+        """
+        if not reasoning_steps:
+            return
+
+        st.markdown("---")
+        st.markdown("**🧠 Agent Reasoning**")
+
+        with st.expander(f"View {len(reasoning_steps)} reasoning steps", expanded=False):
+            for i, step in enumerate(reasoning_steps, 1):
+                agent = step.get("agent", "unknown")
+                action = step.get("action", "unknown")
+                duration_ms = step.get("duration_ms", 0)
+
+                # Display step header
+                st.markdown(f"**Step {i}: {agent.title()} - {action.replace('_', ' ').title()}**")
+                st.caption(f"⏱ Duration: {duration_ms}ms")
+
+                # Display input/output based on agent type
+                input_data = step.get("input", {})
+                output_data = step.get("output", {})
+
+                if agent == "router":
+                    st.markdown(f"**Classification:** {output_data.get('type', 'N/A')}")
+                    st.markdown(f"**Reasoning:** {output_data.get('reasoning', 'N/A')}")
+
+                elif agent == "decomposer":
+                    sub_queries = output_data.get("sub_queries", [])
+                    execution_order = output_data.get("execution_order", "N/A")
+                    st.markdown(f"**Sub-queries ({len(sub_queries)}):**")
+                    for j, sq in enumerate(sub_queries, 1):
+                        st.markdown(f"{j}. {sq}")
+                    st.markdown(f"**Execution:** {execution_order}")
+
+                elif agent == "executor":
+                    results_count = output_data.get("results_count", 0)
+                    total_chunks = output_data.get("total_chunks_retrieved", 0)
+                    st.markdown(f"**Results:** {results_count} sub-queries executed")
+                    st.markdown(f"**Chunks Retrieved:** {total_chunks}")
+
+                elif agent == "synthesizer":
+                    answer_length = output_data.get("final_answer_length", 0)
+                    total_sources = output_data.get("total_sources", 0)
+                    st.markdown(f"**Answer Length:** {answer_length} characters")
+                    st.markdown(f"**Sources Combined:** {total_sources}")
+
+                # Add separator between steps
+                if i < len(reasoning_steps):
+                    st.markdown("---")
