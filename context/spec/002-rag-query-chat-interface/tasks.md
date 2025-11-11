@@ -242,48 +242,48 @@ Each slice builds on the previous and leaves the application **runnable and test
 ### Slice 6: RAG Service Orchestration
 **Goal**: Create clean service layer to orchestrate all RAG components and integrate with existing PDF upload flow.
 
-- [ ] **Slice 6.1: Implement RAGService**
-  - [ ] Create `src/rag/service.py` with `RAGService` class
-  - [ ] Implement `__init__` with dependency injection (chunker, embedder, vector_store, query_engine)
-  - [ ] Implement `process_document(document: ExtractedDocument) -> RAGResult`
+- [x] **Slice 6.1: Implement RAGService**
+  - [x] Create `src/rag/service.py` with `RAGService` class
+  - [x] Implement `__init__` with dependency injection (chunker, embedder, vector_store, query_engine)
+  - [x] Implement `process_document(document: ExtractedDocument) -> RAGResult`
     - Step 1: Chunk document
     - Step 2: Generate embeddings
     - Step 3: Upsert to vector store
     - Step 4: Return `RAGResult` with success, chunk counts, processing time
     - Add try/except for error handling, return `RAGResult` with error message on failure
-  - [ ] Implement `query(question: str) -> QueryResult` (delegates to `query_engine.query()`)
-  - [ ] Implement `delete_document(document_id: str) -> bool` (delegates to `vector_store.delete_document()`)
-  - [ ] Add comprehensive logging throughout
+  - [x] Implement `query(question: str) -> QueryResult` (delegates to `query_engine.query()`)
+  - [x] Implement `delete_document(document_id: str) -> bool` (delegates to `vector_store.delete_document()`)
+  - [x] Add comprehensive logging throughout
 
-- [ ] **Slice 6.2: Integration Tests for RAGService**
-  - [ ] Create `tests/rag/test_rag_service.py`
-  - [ ] Test end-to-end document processing with real `ExtractedDocument`
-  - [ ] Test query processing with real question
-  - [ ] Test document deletion
-  - [ ] Test error handling (Qdrant unavailable, API key missing)
-  - [ ] Run tests: `pytest tests/rag/test_rag_service.py -v`
+- [x] **Slice 6.2: Integration Tests for RAGService**
+  - [x] Create `tests/rag/test_rag_service.py`
+  - [x] Test end-to-end document processing with real `ExtractedDocument`
+  - [x] Test query processing with real question
+  - [x] Test document deletion
+  - [x] Test error handling (Qdrant unavailable, API key missing)
+  - [x] Run tests: `pytest tests/rag/test_rag_service.py -v`
 
-- [ ] **Slice 6.3: Integrate with PDFProcessingService**
-  - [ ] Update `src/ui/components/upload.py` to accept `rag_service: RAGService | None` in constructor
-  - [ ] After successful PDF processing, check if `rag_service` is available
-  - [ ] If available, call `rag_service.process_document(result.document)` with spinner
-  - [ ] Display indexing result: "✓ Indexed 45 chunks in 3.2s. You can now ask questions!"
-  - [ ] Store `document_id` in `st.session_state.current_document_id` for chat reference
-  - [ ] Handle indexing failures gracefully: "Document uploaded but indexing failed: [error]"
+- [x] **Slice 6.3: Integrate with PDFProcessingService**
+  - [x] Update `src/ui/components/upload.py` to accept `rag_service: RAGService | None` in constructor
+  - [x] After successful PDF processing, check if `rag_service` is available
+  - [x] If available, call `rag_service.process_document(result.document)` with spinner
+  - [x] Display indexing result: "✓ Indexed 45 chunks in 3.2s. You can now ask questions!"
+  - [x] Store `document_id` in `st.session_state.current_document_id` for chat reference
+  - [x] Handle indexing failures gracefully: "Document uploaded but indexing failed: [error]"
 
-- [ ] **Slice 6.4: Initialize RAG Service in Main App**
-  - [ ] Update `src/ui/app.py` to initialize `RAGService` with all dependencies
-  - [ ] Wrap initialization in try/except to handle Qdrant unavailable scenario
-  - [ ] If Qdrant unavailable, set `rag_service = None` and log warning
-  - [ ] Pass `rag_service` to `PDFUploadComponent` and `ChatComponent`
-  - [ ] In chat tab, show error if `rag_service is None`: "RAG service unavailable. Start Qdrant: docker compose up -d"
-  - [ ] Test graceful degradation: stop Qdrant, verify app still works for uploads
+- [x] **Slice 6.4: Initialize RAG Service in Main App**
+  - [x] Update `src/ui/app.py` to initialize `RAGService` with all dependencies
+  - [x] Wrap initialization in try/except to handle Qdrant unavailable scenario
+  - [x] If Qdrant unavailable, set `rag_service = None` and log warning
+  - [x] Pass `rag_service` to `PDFUploadComponent` and `ChatComponent`
+  - [x] In chat tab, show error if `rag_service is None`: "RAG service unavailable. Start Qdrant: docker compose up -d"
+  - [x] Test graceful degradation: stop Qdrant, verify app still works for uploads
 
-- [ ] **Slice 6.5: Document Cleanup on Deletion**
-  - [ ] Add document deletion feature to UI (optional for this phase)
-  - [ ] When document deleted, call `rag_service.delete_document(document_id)`
-  - [ ] Verify chunks removed from Qdrant
-  - [ ] Test: upload document → delete → verify Qdrant no longer has chunks
+- [x] **Slice 6.5: Document Cleanup on Deletion**
+  - [x] Add document deletion feature to UI (optional for this phase)
+  - [x] When document deleted, call `rag_service.delete_document(document_id)`
+  - [x] Verify chunks removed from Qdrant
+  - [x] Test: upload document → delete → verify Qdrant no longer has chunks
 
 **Runnable Outcome**: Clean service architecture → Upload flow integrated with RAG → Graceful degradation if Qdrant down → Document cleanup works.
 
@@ -307,17 +307,17 @@ Each slice builds on the previous and leaves the application **runnable and test
   - [x] Test follow-up question with conversation context
   - [x] Run test: `pytest tests/integration/test_rag_e2e.py -v` (6/9 passing, 3 reveal threshold behavior)
 
-- [ ] **Slice 7.3: Manual Testing with Real Documents** (User task)
-  - [ ] Use Amazon 10-K from `data/sample/`
-  - [ ] Test question types:
+- [x] **Slice 7.3: Manual Testing with Real Documents** (User task)
+  - [x] Use Amazon 10-K from `data/sample/`
+  - [x] Test question types:
     - Simple: "What were the main revenue drivers?"
     - Complex: "What are the top 3 risks?"
     - Multi-part: "How did Q3 and Q4 revenue compare?"
     - Out-of-scope: "What is the current stock price?" (should decline gracefully)
-  - [ ] Verify all citations match actual pages in source PDF
-  - [ ] Verify answers are factually correct from document
-  - [ ] Test with 2-3 different 10-K documents
-  - [ ] Document results in test log
+  - [x] Verify all citations match actual pages in source PDF
+  - [x] Verify answers are factually correct from document
+  - [x] Test with 2-3 different 10-K documents (Apple 10-K and Amazon 10-K tested)
+  - [x] Document results in test log (Performance issue discovered and fixed)
 
 - [x] **Slice 7.4: Performance Benchmarking**
   - [x] Measure document indexing time (8-12s for 2.4MB PDF, target <30s ✓)
