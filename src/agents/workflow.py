@@ -5,27 +5,78 @@ import logging
 from langgraph.graph import END, StateGraph
 
 from src.agents.models import AgentState
+from src.agents.router import query_router_agent
 
 logger = logging.getLogger(__name__)
 
 
-def passthrough_node(state: AgentState) -> AgentState:
-    """Minimal passthrough node for testing.
+def route_query(state: AgentState) -> str:
+    """Conditional routing based on query complexity.
 
-    This is a placeholder that will be replaced with real agents.
-    For now, it just logs the question and returns the state unchanged.
+    Routes to different workflow paths based on query_type:
+    - "simple": Direct execution (no decomposition needed)
+    - "complex": Decomposition path (requires query breakdown)
+
+    Args:
+        state: Current agent state with query_type set by router
+
+    Returns:
+        Next node name to route to
     """
-    question = state.get("original_question", "")
-    logger.info(f"Passthrough node received question: {question}")
+    query_type = state.get("query_type", "simple")
+
+    if query_type == "complex":
+        logger.info("Routing to complex query path (decomposition)")
+        return "complex_path"
+    else:
+        logger.info("Routing to simple query path (direct execution)")
+        return "simple_path"
+
+
+def simple_path_node(state: AgentState) -> AgentState:
+    """Placeholder for simple query execution path.
+
+    In future slices, this will execute the query directly through RAG.
+    For now, it's a placeholder that will be replaced.
+
+    Args:
+        state: Current agent state
+
+    Returns:
+        Updated state
+    """
+    logger.info("Simple path: Query will be executed directly (not implemented yet)")
 
     # Initialize metadata fields if not present
     if "agent_calls" not in state:
         state["agent_calls"] = []
-    if "reasoning_steps" not in state:
-        state["reasoning_steps"] = []
 
-    # Record that this node was called
-    state["agent_calls"].append("passthrough")
+    # Record this path was taken
+    state["agent_calls"].append("simple_path")
+
+    return state
+
+
+def complex_path_node(state: AgentState) -> AgentState:
+    """Placeholder for complex query decomposition path.
+
+    In future slices, this will route to decomposer -> executor -> synthesizer.
+    For now, it's a placeholder.
+
+    Args:
+        state: Current agent state
+
+    Returns:
+        Updated state
+    """
+    logger.info("Complex path: Query will be decomposed (not implemented yet)")
+
+    # Initialize metadata fields if not present
+    if "agent_calls" not in state:
+        state["agent_calls"] = []
+
+    # Record this path was taken
+    state["agent_calls"].append("complex_path")
 
     return state
 
@@ -33,24 +84,42 @@ def passthrough_node(state: AgentState) -> AgentState:
 def create_agent_workflow() -> StateGraph:
     """Create the LangGraph workflow for agent orchestration.
 
-    For Slice 1, this is a minimal pass-through workflow to verify
-    LangGraph setup works correctly. Future slices will add real agents.
+    Workflow:
+        1. Router: Classifies query as simple or complex
+        2. Conditional routing:
+           - Simple: Direct execution (future: executor only)
+           - Complex: Decomposition path (future: decomposer → executor → synthesizer)
 
     Returns:
         Compiled LangGraph workflow
     """
     workflow = StateGraph(AgentState)
 
-    # Add passthrough node (temporary - will be replaced with real agents)
-    workflow.add_node("passthrough", passthrough_node)
+    # Add router as entry point
+    workflow.add_node("router", query_router_agent)
 
-    # Set entry point
-    workflow.set_entry_point("passthrough")
+    # Add placeholder nodes for routing paths
+    workflow.add_node("simple_path", simple_path_node)
+    workflow.add_node("complex_path", complex_path_node)
 
-    # Connect to end
-    workflow.add_edge("passthrough", END)
+    # Set router as entry point
+    workflow.set_entry_point("router")
 
-    logger.info("Agent workflow created (passthrough mode)")
+    # Add conditional routing based on query type
+    workflow.add_conditional_edges(
+        "router",
+        route_query,
+        {
+            "simple_path": "simple_path",
+            "complex_path": "complex_path",
+        },
+    )
+
+    # Both paths go to END for now (will be extended in future slices)
+    workflow.add_edge("simple_path", END)
+    workflow.add_edge("complex_path", END)
+
+    logger.info("Agent workflow created with router and conditional routing")
 
     return workflow.compile()
 
@@ -60,17 +129,34 @@ def test_workflow() -> None:
     workflow = create_agent_workflow()
 
     # Test with a simple question
-    initial_state: AgentState = {
+    print("\n=== Testing Simple Query ===")
+    simple_state: AgentState = {
         "original_question": "What was total revenue in 2024?",
         "agent_calls": [],
         "reasoning_steps": [],
     }
 
-    result = workflow.invoke(initial_state)
+    simple_result = workflow.invoke(simple_state)
 
-    print("✓ Workflow test passed")
-    print(f"  Question: {result['original_question']}")
-    print(f"  Agents called: {result['agent_calls']}")
+    print("✓ Simple query test passed")
+    print(f"  Question: {simple_result['original_question']}")
+    print(f"  Query Type: {simple_result.get('query_type', 'unknown')}")
+    print(f"  Agents called: {simple_result['agent_calls']}")
+
+    # Test with a complex question
+    print("\n=== Testing Complex Query ===")
+    complex_state: AgentState = {
+        "original_question": "How did iPhone sales compare in Q3 vs Q4 and what drove the change?",
+        "agent_calls": [],
+        "reasoning_steps": [],
+    }
+
+    complex_result = workflow.invoke(complex_state)
+
+    print("✓ Complex query test passed")
+    print(f"  Question: {complex_result['original_question']}")
+    print(f"  Query Type: {complex_result.get('query_type', 'unknown')}")
+    print(f"  Agents called: {complex_result['agent_calls']}")
 
 
 if __name__ == "__main__":

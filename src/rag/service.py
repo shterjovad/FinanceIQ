@@ -3,7 +3,14 @@
 import logging
 import time
 import traceback
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from langgraph.graph.state import CompiledStateGraph
+
+    from src.agents.models import AgentState
+
+from src.config.settings import settings
 from src.pdf_processor.models import ExtractedDocument
 from src.rag.chunker import DocumentChunker
 from src.rag.embedder import EmbeddingGenerator
@@ -31,6 +38,8 @@ class RAGService:
         embedder: EmbeddingGenerator for creating vector embeddings
         vector_store: VectorStoreManager for persisting and retrieving chunks
         query_engine: RAGQueryEngine for answering questions
+        agent_workflow: Optional LangGraph workflow for multi-agent query processing
+        use_agents: Flag indicating whether agent-based query processing is enabled
     """
 
     def __init__(
@@ -53,7 +62,23 @@ class RAGService:
         self.vector_store = vector_store
         self.query_engine = query_engine
 
-        logger.info("RAGService initialized with all components")
+        # Initialize agent workflow if enabled
+        self.use_agents = settings.USE_AGENTS
+        self.agent_workflow: "CompiledStateGraph | None" = None
+
+        if self.use_agents:
+            try:
+                # Lazy import to avoid circular dependency
+                from src.agents.workflow import create_agent_workflow
+
+                self.agent_workflow = create_agent_workflow()
+                logger.info("RAGService initialized with agent workflow enabled")
+            except Exception as e:
+                logger.error(f"Failed to initialize agent workflow: {e}", exc_info=True)
+                logger.warning("Falling back to standard query processing")
+                self.use_agents = False
+        else:
+            logger.info("RAGService initialized with standard query processing")
 
     def process_document(self, document: ExtractedDocument) -> RAGResult:
         """Process a document through the complete RAG pipeline.
@@ -129,9 +154,9 @@ class RAGService:
     def query(self, question: str) -> QueryResult:
         """Query the knowledge base with a natural language question.
 
-        This is a simple delegation to the query engine, with added logging
-        for monitoring and debugging purposes. The query engine handles
-        the complete RAG query pipeline including retrieval and generation.
+        If agent workflow is enabled (USE_AGENTS=true), queries are processed through
+        the multi-agent system for intelligent query decomposition and routing.
+        Otherwise, queries are handled directly by the standard query engine.
 
         Args:
             question: User's natural language question
@@ -146,7 +171,12 @@ class RAGService:
         logger.info(f"RAGService received query: {question[:100]}...")
 
         try:
-            result = self.query_engine.query(question)
+            # Use agent workflow if enabled
+            if self.use_agents and self.agent_workflow:
+                result = self._query_with_agents(question)
+            else:
+                result = self._query_direct(question)
+
             logger.info(
                 f"Query completed successfully in {result.query_time_seconds:.2f}s "
                 f"({result.chunks_retrieved} chunks retrieved)"
@@ -156,6 +186,70 @@ class RAGService:
         except Exception as e:
             logger.error(f"Query failed: {str(e)}", exc_info=True)
             raise
+
+    def _query_direct(self, question: str) -> QueryResult:
+        """Execute query directly through standard query engine.
+
+        This is the traditional RAG pipeline without agent orchestration.
+
+        Args:
+            question: User's natural language question
+
+        Returns:
+            QueryResult from standard query engine
+        """
+        logger.info("Using standard query processing (no agents)")
+        return self.query_engine.query(question)
+
+    def _query_with_agents(self, question: str) -> QueryResult:
+        """Execute query through multi-agent workflow.
+
+        The agent workflow handles query classification, decomposition (if complex),
+        execution, and synthesis. Currently in Slice 2, only routing is implemented,
+        so both simple and complex queries fall back to standard execution.
+
+        Args:
+            question: User's natural language question
+
+        Returns:
+            QueryResult with additional agent metadata if available
+        """
+        logger.info("Using agent-based query processing")
+
+        # Lazy import to avoid circular dependency
+        from src.agents.models import AgentState
+
+        # Create initial agent state
+        initial_state: AgentState = {
+            "original_question": question,
+            "agent_calls": [],
+            "reasoning_steps": [],
+        }
+
+        # Execute agent workflow
+        start_time = time.time()
+        agent_result: AgentState = self.agent_workflow.invoke(initial_state)  # type: ignore
+        agent_time = time.time() - start_time
+
+        # Log agent decisions
+        query_type = agent_result.get("query_type", "unknown")
+        logger.info(
+            f"Agent workflow classified query as '{query_type}' in {agent_time:.2f}s "
+            f"(agents called: {agent_result.get('agent_calls', [])})"
+        )
+
+        # For now (Slice 2), we always fall back to standard execution
+        # In future slices, complex queries will use decomposer/executor/synthesizer
+        logger.info("Executing query through standard engine (agent execution not yet implemented)")
+        result = self.query_engine.query(question)
+
+        # Attach agent metadata to result for transparency
+        if hasattr(result, "metadata"):
+            result.metadata["query_type"] = query_type  # type: ignore
+            result.metadata["agent_calls"] = agent_result.get("agent_calls", [])  # type: ignore
+            result.metadata["complexity_reasoning"] = agent_result.get("complexity_reasoning", "")  # type: ignore
+
+        return result
 
     def delete_document(self, document_id: str) -> bool:
         """Delete all chunks associated with a document from the vector store.
