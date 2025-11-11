@@ -6,7 +6,6 @@ import pytest
 
 from src.agents.models import AgentState
 from src.agents.workflow import (
-    complex_path_node,
     create_agent_workflow,
     route_query,
     simple_path_node,
@@ -75,32 +74,6 @@ class TestSimplePathNode:
         assert "simple_path" in result["agent_calls"]
 
 
-class TestComplexPathNode:
-    """Test suite for complex_path_node function."""
-
-    def test_initializes_metadata_fields(self):
-        """Test that metadata fields are initialized if missing."""
-        state: AgentState = {
-            "original_question": "How did revenue compare?",
-        }
-
-        result = complex_path_node(state)
-
-        assert "agent_calls" in result
-        assert isinstance(result["agent_calls"], list)
-
-    def test_records_agent_call(self):
-        """Test that complex_path is recorded in agent_calls."""
-        state: AgentState = {
-            "original_question": "How did revenue compare?",
-            "agent_calls": [],
-        }
-
-        result = complex_path_node(state)
-
-        assert "complex_path" in result["agent_calls"]
-
-
 class TestCreateAgentWorkflow:
     """Test suite for create_agent_workflow function."""
 
@@ -135,8 +108,12 @@ class TestCreateAgentWorkflow:
         assert "simple_path" in result["agent_calls"]
         assert "complex_path" not in result["agent_calls"]
 
+    @patch("src.agents.workflow.answer_synthesis_agent")
+    @patch("src.agents.workflow.query_decomposer_agent")
     @patch("src.agents.workflow.query_router_agent")
-    def test_workflow_executes_complex_path(self, mock_router):
+    def test_workflow_executes_complex_path(
+        self, mock_router, mock_decomposer, mock_synthesizer
+    ):
         """Test that workflow executes complex query path correctly."""
         # Mock router to classify as complex
         def mock_router_fn(state: AgentState) -> AgentState:
@@ -147,9 +124,25 @@ class TestCreateAgentWorkflow:
             state["agent_calls"].append("router")
             return state
 
-        mock_router.side_effect = mock_router_fn
+        # Mock decomposer
+        def mock_decomposer_fn(state: AgentState) -> AgentState:
+            state["sub_queries"] = ["Q1", "Q2"]
+            state["execution_order"] = "parallel"
+            state["agent_calls"].append("decomposer")
+            return state
 
-        # Create workflow
+        # Mock synthesizer
+        def mock_synthesizer_fn(state: AgentState) -> AgentState:
+            state["final_answer"] = "Synthesized answer"
+            state["all_sources"] = []
+            state["agent_calls"].append("synthesizer")
+            return state
+
+        mock_router.side_effect = mock_router_fn
+        mock_decomposer.side_effect = mock_decomposer_fn
+        mock_synthesizer.side_effect = mock_synthesizer_fn
+
+        # Create workflow (without query_engine for this test)
         workflow = create_agent_workflow()
 
         # Execute with complex question
@@ -163,7 +156,9 @@ class TestCreateAgentWorkflow:
         # Verify correct path was taken
         assert result["query_type"] == "complex"
         assert "router" in result["agent_calls"]
-        assert "complex_path" in result["agent_calls"]
+        assert "decomposer" in result["agent_calls"]
+        assert "executor" in result["agent_calls"]
+        assert "synthesizer" in result["agent_calls"]
         assert "simple_path" not in result["agent_calls"]
 
     @patch("src.agents.workflow.query_router_agent")

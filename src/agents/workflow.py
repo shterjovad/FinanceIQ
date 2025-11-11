@@ -1,11 +1,19 @@
 """LangGraph workflow definition for multi-agent query processing."""
 
 import logging
+from functools import partial
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.rag.query_engine import RAGQueryEngine
 
 from langgraph.graph import END, StateGraph
 
+from src.agents.decomposer import query_decomposer_agent
+from src.agents.executor import sub_query_executor
 from src.agents.models import AgentState
 from src.agents.router import query_router_agent
+from src.agents.synthesizer import answer_synthesis_agent
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +44,8 @@ def route_query(state: AgentState) -> str:
 def simple_path_node(state: AgentState) -> AgentState:
     """Placeholder for simple query execution path.
 
-    In future slices, this will execute the query directly through RAG.
-    For now, it's a placeholder that will be replaced.
+    Simple queries skip decomposition and go directly to RAG execution
+    (handled by RAGService, not in workflow).
 
     Args:
         state: Current agent state
@@ -45,7 +53,7 @@ def simple_path_node(state: AgentState) -> AgentState:
     Returns:
         Updated state
     """
-    logger.info("Simple path: Query will be executed directly (not implemented yet)")
+    logger.info("Simple path: Query will be executed directly by RAG service")
 
     # Initialize metadata fields if not present
     if "agent_calls" not in state:
@@ -57,38 +65,19 @@ def simple_path_node(state: AgentState) -> AgentState:
     return state
 
 
-def complex_path_node(state: AgentState) -> AgentState:
-    """Placeholder for complex query decomposition path.
-
-    In future slices, this will route to decomposer -> executor -> synthesizer.
-    For now, it's a placeholder.
-
-    Args:
-        state: Current agent state
-
-    Returns:
-        Updated state
-    """
-    logger.info("Complex path: Query will be decomposed (not implemented yet)")
-
-    # Initialize metadata fields if not present
-    if "agent_calls" not in state:
-        state["agent_calls"] = []
-
-    # Record this path was taken
-    state["agent_calls"].append("complex_path")
-
-    return state
-
-
-def create_agent_workflow() -> StateGraph:
+def create_agent_workflow(query_engine: "RAGQueryEngine | None" = None) -> StateGraph:
     """Create the LangGraph workflow for agent orchestration.
 
     Workflow:
         1. Router: Classifies query as simple or complex
         2. Conditional routing:
-           - Simple: Direct execution (future: executor only)
-           - Complex: Decomposition path (future: decomposer → executor → synthesizer)
+           - Simple: Direct execution (handled by RAGService)
+           - Complex: Decomposition path (decomposer → executor → synthesizer)
+
+    Args:
+        query_engine: Optional RAG query engine for executor. If None, complex queries
+                     will fail (workflow should only be created with query_engine when
+                     complex queries need to be supported).
 
     Returns:
         Compiled LangGraph workflow
@@ -98,9 +87,29 @@ def create_agent_workflow() -> StateGraph:
     # Add router as entry point
     workflow.add_node("router", query_router_agent)
 
-    # Add placeholder nodes for routing paths
+    # Add simple path (placeholder - execution happens in RAGService)
     workflow.add_node("simple_path", simple_path_node)
-    workflow.add_node("complex_path", complex_path_node)
+
+    # Add complex path agents
+    workflow.add_node("decomposer", query_decomposer_agent)
+
+    # Executor needs query_engine - use partial to bind it
+    if query_engine is not None:
+        executor_with_engine = partial(sub_query_executor, query_engine=query_engine)
+        workflow.add_node("executor", executor_with_engine)
+    else:
+        # Fallback executor that logs warning
+        def executor_fallback(state: AgentState) -> AgentState:
+            logger.warning("Executor called but no query_engine provided")
+            if "agent_calls" not in state:
+                state["agent_calls"] = []
+            state["agent_calls"].append("executor")
+            state["sub_results"] = []
+            return state
+
+        workflow.add_node("executor", executor_fallback)
+
+    workflow.add_node("synthesizer", answer_synthesis_agent)
 
     # Set router as entry point
     workflow.set_entry_point("router")
@@ -111,15 +120,19 @@ def create_agent_workflow() -> StateGraph:
         route_query,
         {
             "simple_path": "simple_path",
-            "complex_path": "complex_path",
+            "complex_path": "decomposer",
         },
     )
 
-    # Both paths go to END for now (will be extended in future slices)
+    # Simple path goes to END (execution in RAGService)
     workflow.add_edge("simple_path", END)
-    workflow.add_edge("complex_path", END)
 
-    logger.info("Agent workflow created with router and conditional routing")
+    # Complex path: decomposer → executor → synthesizer → END
+    workflow.add_edge("decomposer", "executor")
+    workflow.add_edge("executor", "synthesizer")
+    workflow.add_edge("synthesizer", END)
+
+    logger.info("Agent workflow created with complete multi-agent pipeline")
 
     return workflow.compile()
 
