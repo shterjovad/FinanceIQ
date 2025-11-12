@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from src.rag.query_engine import RAGQueryEngine
 
 from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from src.agents.decomposer import query_decomposer_agent
 from src.agents.executor import sub_query_executor
@@ -65,7 +66,9 @@ def simple_path_node(state: AgentState) -> AgentState:
     return state
 
 
-def create_agent_workflow(query_engine: "RAGQueryEngine | None" = None) -> StateGraph:
+def create_agent_workflow(
+    query_engine: "RAGQueryEngine | None" = None,
+) -> CompiledStateGraph:
     """Create the LangGraph workflow for agent orchestration.
 
     Workflow:

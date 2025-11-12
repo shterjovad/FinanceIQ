@@ -7,7 +7,6 @@ These tests measure actual performance metrics and can be used for:
 """
 
 import time
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -201,9 +200,7 @@ class TestAgentPerformance:
             "reasoning_steps": [],
         }
 
-        start_time = time.time()
         result = workflow.invoke(initial_state)
-        total_time = time.time() - start_time
 
         if result["query_type"] == "complex" and result.get("execution_order") == "parallel":
             num_sub_queries = len(result.get("sub_queries", []))

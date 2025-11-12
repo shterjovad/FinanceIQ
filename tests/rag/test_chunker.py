@@ -1,7 +1,8 @@
 """Unit tests for DocumentChunker."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from src.pdf_processor.models import DocumentMetadata, ExtractedDocument
 from src.rag.chunker import DocumentChunker

@@ -353,7 +353,7 @@ class TestEmbeddingGenerator:
         def create_batch_response(size: int) -> Mock:
             mock_response = Mock()
             mock_items = []
-            for i in range(size):
+            for _i in range(size):
                 mock_item = Mock()
                 mock_item.embedding = [0.2] * 1536
                 mock_items.append(mock_item)
@@ -472,7 +472,7 @@ class TestEmbeddingGenerator:
         def create_batch_response(size: int) -> Mock:
             mock_response = Mock()
             mock_items = []
-            for i in range(size):
+            for _i in range(size):
                 mock_item = Mock()
                 mock_item.embedding = [0.3] * 1536
                 mock_items.append(mock_item)

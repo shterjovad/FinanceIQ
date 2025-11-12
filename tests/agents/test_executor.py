@@ -2,8 +2,6 @@
 
 from unittest.mock import MagicMock
 
-import pytest
-
 from src.agents.executor import sub_query_executor
 from src.agents.models import AgentState
 from src.rag.models import QueryResult, SourceCitation

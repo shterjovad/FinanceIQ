@@ -291,7 +291,6 @@ class ChatComponent:
                 st.caption(f"⏱ Duration: {duration_ms}ms")
 
                 # Display input/output based on agent type
-                input_data = step.get("input", {})
                 output_data = step.get("output", {})
 
                 if agent == "router":

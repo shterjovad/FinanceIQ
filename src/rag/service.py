@@ -64,8 +64,8 @@ class RAGService:
 
         # Initialize agent workflow if enabled
         self.use_agents = settings.USE_AGENTS
-        self.agent_workflow: "CompiledStateGraph | None" = None
-        self.last_agent_state: "AgentState | None" = None  # Store last agent state for UI
+        self.agent_workflow: CompiledStateGraph | None = None
+        self.last_agent_state: AgentState | None = None  # Store last agent state for UI
 
         if self.use_agents:
             try:

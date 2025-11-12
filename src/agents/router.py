@@ -3,7 +3,6 @@
 import json
 import logging
 import time
-from typing import Any
 
 import litellm
 
@@ -98,7 +97,7 @@ Return JSON only:
             reasoning = f"Invalid classification returned: {query_type}. Defaulting to simple."
 
         # Update state
-        state["query_type"] = query_type  # type: ignore
+        state["query_type"] = query_type
         state["complexity_reasoning"] = reasoning
 
         # Initialize metadata fields if not present
@@ -131,7 +130,7 @@ Return JSON only:
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse router response as JSON: {e}")
         # Fallback to simple
-        state["query_type"] = "simple"  # type: ignore
+        state["query_type"] = "simple"
         state["complexity_reasoning"] = (
             "Classification failed (JSON parse error), defaulting to simple query"
         )
@@ -143,7 +142,7 @@ Return JSON only:
     except Exception as e:
         logger.error(f"Router agent failed: {e}", exc_info=True)
         # Fallback to simple on any error
-        state["query_type"] = "simple"  # type: ignore
+        state["query_type"] = "simple"
         state["complexity_reasoning"] = (
             f"Classification failed ({type(e).__name__}), defaulting to simple query"
         )

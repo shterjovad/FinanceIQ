@@ -3,8 +3,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.agents.decomposer import query_decomposer_agent
 from src.agents.models import AgentState
 

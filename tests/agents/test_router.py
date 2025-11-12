@@ -3,8 +3,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.agents.models import AgentState
 from src.agents.router import query_router_agent
 
