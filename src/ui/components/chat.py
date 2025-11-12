@@ -32,15 +32,22 @@ class ChatComponent:
     - Error handling for unavailable services
     """
 
-    def __init__(self, rag_service: RAGService | None) -> None:
+    def __init__(
+        self,
+        rag_service: RAGService | None,
+        session_id: str | None = None,
+    ) -> None:
         """Initialize the chat component.
 
         Args:
             rag_service: RAGService instance for processing queries, or None if unavailable
+            session_id: Browser session ID for query isolation
         """
         self.rag_service = rag_service
+        self.session_id = session_id
         logger.debug(
-            f"ChatComponent initialized (rag_service available: {rag_service is not None})"
+            f"ChatComponent initialized (rag_service available: {rag_service is not None}, "
+            f"session_id: {session_id[:8] if session_id else 'None'}...)"
         )
 
     def render(self) -> None:
@@ -169,8 +176,11 @@ class ChatComponent:
             self.rag_service.use_agents = use_agents_from_ui  # type: ignore[union-attr]
 
             try:
-                # Call RAG service
-                result = self.rag_service.query(user_message)  # type: ignore[union-attr]
+                # Call RAG service with session isolation
+                result = self.rag_service.query(  # type: ignore[union-attr]
+                    user_message,
+                    session_id=self.session_id,
+                )
 
                 # Extract agent metadata if agents were used
                 reasoning_steps = None

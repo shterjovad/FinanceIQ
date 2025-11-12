@@ -92,7 +92,11 @@ class VectorStoreManager:
             logger.error(error_msg)
             raise VectorStoreError(error_msg) from e
 
-    def upsert_chunks(self, chunks: list[DocumentChunk]) -> int:
+    def upsert_chunks(
+        self,
+        chunks: list[DocumentChunk],
+        session_id: str | None = None,
+    ) -> int:
         """Insert or update document chunks in the vector store.
 
         Converts DocumentChunk objects to Qdrant points and stores them with
@@ -102,6 +106,7 @@ class VectorStoreManager:
         Args:
             chunks: List of DocumentChunk objects to store. Each chunk must
                    have an embedding (embedding field must not be None).
+            session_id: Browser session ID for document isolation
 
         Returns:
             Number of chunks successfully inserted/updated
@@ -124,16 +129,23 @@ class VectorStoreManager:
             # Convert chunks to Qdrant points
             points: list[PointStruct] = []
             for chunk in chunks:
+                # Build payload with session_id if provided
+                payload = {
+                    "document_id": chunk.document_id,
+                    "chunk_index": chunk.chunk_index,
+                    "page_numbers": chunk.page_numbers,
+                    "content": chunk.content,
+                    "token_count": chunk.token_count,
+                }
+
+                # Add session_id to payload if provided
+                if session_id:
+                    payload["session_id"] = session_id
+
                 point = PointStruct(
                     id=chunk.chunk_id,
                     vector=chunk.embedding,  # type: ignore[arg-type]  # Already validated above
-                    payload={
-                        "document_id": chunk.document_id,
-                        "chunk_index": chunk.chunk_index,
-                        "page_numbers": chunk.page_numbers,
-                        "content": chunk.content,
-                        "token_count": chunk.token_count,
-                    },
+                    payload=payload,
                 )
                 points.append(point)
 
@@ -152,7 +164,11 @@ class VectorStoreManager:
             raise VectorStoreError(error_msg) from e
 
     def search(
-        self, query_embedding: list[float], top_k: int = 5, min_score: float = 0.0
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
+        min_score: float = 0.0,
+        session_id: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search for similar document chunks using vector similarity.
 
@@ -163,6 +179,7 @@ class VectorStoreManager:
             query_embedding: 1536-dimensional query vector
             top_k: Maximum number of results to return (default: 5)
             min_score: Minimum similarity score threshold (default: 0.0)
+            session_id: Browser session ID for query isolation
 
         Returns:
             List of search results, each containing:
@@ -176,11 +193,26 @@ class VectorStoreManager:
             VectorStoreError: If search operation fails
         """
         try:
+            # Build query filter for session isolation
+            query_filter = None
+            if session_id:
+                from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+                query_filter = Filter(
+                    must=[
+                        FieldCondition(
+                            key="session_id",
+                            match=MatchValue(value=session_id),
+                        )
+                    ]
+                )
+
             search_results = self.client.search(
                 collection_name=self.collection_name,
                 query_vector=query_embedding,
                 limit=top_k,
                 score_threshold=min_score,
+                query_filter=query_filter,
             )
 
             results: list[dict[str, Any]] = []

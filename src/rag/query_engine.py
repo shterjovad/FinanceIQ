@@ -122,7 +122,11 @@ ANSWER:"""
 
         return prompt
 
-    def query(self, question: str) -> QueryResult:
+    def query(
+        self,
+        question: str,
+        session_id: str | None = None,
+    ) -> QueryResult:
         """Execute a RAG query to answer a question about documents.
 
         Implements the complete RAG pipeline:
@@ -136,6 +140,7 @@ ANSWER:"""
 
         Args:
             question: User's question about the documents
+            session_id: Browser session ID for query isolation
 
         Returns:
             QueryResult containing answer, sources, and metadata
@@ -162,14 +167,17 @@ ANSWER:"""
                 raise QueryError(error_msg) from e
 
             # Step 2: Search vector store for relevant chunks
+            session_info = f", session_id={session_id[:8]}..." if session_id else ""
             logger.info(
-                f"Step 2: Searching vector store (top_k={self.top_k}, min_score={self.min_score})"
+                f"Step 2: Searching vector store (top_k={self.top_k}, "
+                f"min_score={self.min_score}{session_info})"
             )
             try:
                 search_results = self.vector_store.search(
                     query_embedding=query_embedding,
                     top_k=self.top_k,
                     min_score=self.min_score,
+                    session_id=session_id,
                 )
             except Exception as e:
                 error_msg = f"Failed to search vector store: {str(e)}"

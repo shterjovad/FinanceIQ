@@ -39,6 +39,7 @@ def sub_query_executor(state: AgentState, query_engine: "RAGQueryEngine") -> Age
 
     sub_queries = state.get("sub_queries", [])
     execution_order = state.get("execution_order", "parallel")
+    session_id = state.get("session_id")
 
     logger.info(
         f"Executor processing {len(sub_queries)} sub-queries ({execution_order} mode)"
@@ -59,9 +60,9 @@ def sub_query_executor(state: AgentState, query_engine: "RAGQueryEngine") -> Age
 
             # Use max_workers=3 to balance concurrency with API rate limits
             with ThreadPoolExecutor(max_workers=3) as executor:
-                # Submit all queries
+                # Submit all queries with session_id
                 future_to_query = {
-                    executor.submit(query_engine.query, sub_q): sub_q
+                    executor.submit(query_engine.query, sub_q, session_id=session_id): sub_q
                     for sub_q in sub_queries
                 }
 
@@ -92,7 +93,7 @@ def sub_query_executor(state: AgentState, query_engine: "RAGQueryEngine") -> Age
             for i, sub_q in enumerate(sub_queries, 1):
                 try:
                     logger.debug(f"Executing sub-query {i}/{len(sub_queries)}: {sub_q[:50]}...")
-                    result = query_engine.query(sub_q)
+                    result = query_engine.query(sub_q, session_id=session_id)
                     sub_results.append(result)
                     logger.debug(
                         f"Sub-query {i} completed in {result.query_time_seconds:.2f}s"

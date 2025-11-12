@@ -22,11 +22,13 @@ class PDFUploadComponent:
     def __init__(
         self,
         rag_service: RAGService | None = None,
+        session_id: str | None = None,
     ) -> None:
         """Initialize the upload component.
 
         Args:
             rag_service: Optional RAG service for document indexing
+            session_id: Browser session ID for document isolation
         """
         # Create validator instance with settings from config
         validator = PDFValidator(
@@ -51,10 +53,14 @@ class PDFUploadComponent:
             chunk_overlap=settings.CHUNK_OVERLAP,
         )
 
-        # Store RAG service (optional)
+        # Store RAG service (optional) and session ID
         self.rag_service = rag_service
+        self.session_id = session_id
 
-        logger.debug(f"PDFUploadComponent initialized (RAG enabled: {rag_service is not None})")
+        logger.debug(
+            f"PDFUploadComponent initialized (RAG enabled: {rag_service is not None}, "
+            f"session_id: {session_id[:8] if session_id else 'None'}...)"
+        )
 
     def render(self) -> None:
         """Render the file upload component and handle validation."""
@@ -198,9 +204,10 @@ class PDFUploadComponent:
                             if self.rag_service:
                                 with st.spinner("Indexing document for search..."):
                                     try:
-                                        # Process document through RAG service
+                                        # Process document through RAG service with session isolation
                                         rag_result = self.rag_service.process_document(
-                                            result.document
+                                            result.document,
+                                            session_id=self.session_id,
                                         )
 
                                         if rag_result.success:
@@ -218,6 +225,11 @@ class PDFUploadComponent:
 
                                             # Mark this file as indexed
                                             st.session_state.indexed_documents.add(file_id)
+
+                                            # Increment document count for session tracking
+                                            st.session_state.document_count = (
+                                                st.session_state.get("document_count", 0) + 1
+                                            )
 
                                             logger.info(
                                                 f"Successfully indexed document {rag_result.document_id}: "

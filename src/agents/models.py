@@ -19,6 +19,9 @@ class AgentState(TypedDict, total=False):
     original_question: str
     """The user's original question"""
 
+    session_id: str | None
+    """Browser session ID for query isolation"""
+
     # ========== Analysis (Router Agent) ==========
     query_type: Literal["simple", "complex"]
     """Classification of query complexity"""

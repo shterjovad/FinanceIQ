@@ -82,7 +82,11 @@ class RAGService:
         else:
             logger.info("RAGService initialized with standard query processing")
 
-    def process_document(self, document: ExtractedDocument) -> RAGResult:
+    def process_document(
+        self,
+        document: ExtractedDocument,
+        session_id: str | None = None,
+    ) -> RAGResult:
         """Process a document through the complete RAG pipeline.
 
         This method orchestrates the following steps:
@@ -92,6 +96,7 @@ class RAGService:
 
         Args:
             document: The extracted document to process
+            session_id: Browser session ID for document isolation
 
         Returns:
             RAGResult containing processing status, statistics, and any error information
@@ -115,7 +120,10 @@ class RAGService:
 
             # Step 3: Store chunks in vector database
             logger.info(f"Step 3/3: Upserting {len(chunks_with_embeddings)} chunks to vector store")
-            chunks_indexed = self.vector_store.upsert_chunks(chunks_with_embeddings)
+            chunks_indexed = self.vector_store.upsert_chunks(
+                chunks_with_embeddings,
+                session_id=session_id,
+            )
             logger.info(f"Successfully indexed {chunks_indexed} chunks in vector store")
 
             # Calculate processing time
@@ -153,7 +161,11 @@ class RAGService:
                 error_message=error_msg,
             )
 
-    def query(self, question: str) -> QueryResult:
+    def query(
+        self,
+        question: str,
+        session_id: str | None = None,
+    ) -> QueryResult:
         """Query the knowledge base with a natural language question.
 
         If agent workflow is enabled (USE_AGENTS=true), queries are processed through
@@ -162,6 +174,7 @@ class RAGService:
 
         Args:
             question: User's natural language question
+            session_id: Browser session ID for query isolation
 
         Returns:
             QueryResult containing the answer, source citations, and metadata
@@ -175,9 +188,9 @@ class RAGService:
         try:
             # Use agent workflow if enabled
             if self.use_agents and self.agent_workflow:
-                result = self._query_with_agents(question)
+                result = self._query_with_agents(question, session_id=session_id)
             else:
-                result = self._query_direct(question)
+                result = self._query_direct(question, session_id=session_id)
 
             logger.info(
                 f"Query completed successfully in {result.query_time_seconds:.2f}s "
@@ -189,21 +202,30 @@ class RAGService:
             logger.error(f"Query failed: {str(e)}", exc_info=True)
             raise
 
-    def _query_direct(self, question: str) -> QueryResult:
+    def _query_direct(
+        self,
+        question: str,
+        session_id: str | None = None,
+    ) -> QueryResult:
         """Execute query directly through standard query engine.
 
         This is the traditional RAG pipeline without agent orchestration.
 
         Args:
             question: User's natural language question
+            session_id: Browser session ID for query isolation
 
         Returns:
             QueryResult from standard query engine
         """
         logger.info("Using standard query processing (no agents)")
-        return self.query_engine.query(question)
+        return self.query_engine.query(question, session_id=session_id)
 
-    def _query_with_agents(self, question: str) -> QueryResult:
+    def _query_with_agents(
+        self,
+        question: str,
+        session_id: str | None = None,
+    ) -> QueryResult:
         """Execute query through multi-agent workflow.
 
         The agent workflow handles query classification, decomposition (if complex),
@@ -212,6 +234,7 @@ class RAGService:
 
         Args:
             question: User's natural language question
+            session_id: Browser session ID for query isolation
 
         Returns:
             QueryResult with agent metadata and synthesized answer (for complex queries)
@@ -226,6 +249,7 @@ class RAGService:
             "original_question": question,
             "agent_calls": [],
             "reasoning_steps": [],
+            "session_id": session_id,  # Pass session_id to agents
         }
 
         # Execute agent workflow
@@ -268,7 +292,7 @@ class RAGService:
         else:
             # Simple query or workflow failed - execute directly
             logger.info("Executing query through standard RAG engine")
-            result = self.query_engine.query(question)
+            result = self.query_engine.query(question, session_id=session_id)
 
         # Note: QueryResult doesn't have metadata field, so we can't attach agent metadata
         # This is fine - the agent metadata is already logged

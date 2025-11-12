@@ -4,6 +4,7 @@ This is the main entry point for the Streamlit web application.
 """
 
 import logging
+from uuid import uuid4
 
 import streamlit as st
 from qdrant_client import QdrantClient
@@ -45,6 +46,35 @@ def check_qdrant_connection() -> bool:
     except (UnexpectedResponse, ConnectionError, TimeoutError, Exception) as e:
         logger.warning(f"Failed to connect to Qdrant: {str(e)}")
         return False
+
+
+def initialize_session() -> None:
+    """Initialize session ID and tracking variables if not exists."""
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = str(uuid4())
+        st.session_state.document_count = 0
+        logger.info(f"New session created: {st.session_state.session_id[:8]}...")
+    else:
+        logger.debug(f"Existing session: {st.session_state.session_id[:8]}...")
+
+
+def render_session_status() -> None:
+    """Display session info in sidebar."""
+    doc_count = st.session_state.get("document_count", 0)
+
+    with st.sidebar:
+        st.divider()
+        st.subheader("🔒 Your Session")
+        st.caption("Status: Active")
+        st.caption(f"Documents: {doc_count}")
+        st.caption("Type: Browser session")
+
+        with st.expander("Privacy Notice", expanded=False):
+            st.caption(
+                "• Isolated to this browser tab\n"
+                "• Not visible to other users\n"
+                "• Cleared when you close tab"
+            )
 
 
 def initialize_rag_service() -> RAGService | None:
@@ -122,8 +152,17 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
 
-    # Display main title
+    # Initialize session (must be first!)
+    initialize_session()
+
+    # Display main title with session info
     st.title("FinanceIQ - Financial Document Analysis")
+    doc_count = st.session_state.get("document_count", 0)
+    st.caption(
+        f"🔒 Private Session | "
+        f"{doc_count} document{'s' if doc_count != 1 else ''} | "
+        f"Tab-only"
+    )
 
     # Initialize RAG service
     rag_service = initialize_rag_service()
@@ -174,17 +213,26 @@ def main() -> None:
             st.caption("Check that OPENAI_API_KEY is set and Qdrant is running")
             st.caption("Start Qdrant: docker compose up -d")
 
+    # Render session status in sidebar
+    render_session_status()
+
     # Create tabs for different functionality
     tab1, tab2 = st.tabs(["📄 Upload Documents", "💬 Ask Questions"])
 
     with tab1:
-        # Render upload component with RAG service
-        upload_component = PDFUploadComponent(rag_service=rag_service)
+        # Render upload component with RAG service and session ID
+        upload_component = PDFUploadComponent(
+            rag_service=rag_service,
+            session_id=st.session_state.session_id
+        )
         upload_component.render()
 
     with tab2:
-        # Render chat interface
-        chat_component = ChatComponent(rag_service=rag_service)
+        # Render chat interface with session ID
+        chat_component = ChatComponent(
+            rag_service=rag_service,
+            session_id=st.session_state.session_id
+        )
         chat_component.render()
 
 
