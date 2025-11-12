@@ -64,7 +64,8 @@ class RAGService:
 
         # Initialize agent workflow if enabled
         self.use_agents = settings.USE_AGENTS
-        self.agent_workflow: "CompiledStateGraph | None" = None
+        self.agent_workflow: CompiledStateGraph | None = None
+        self.last_agent_state: AgentState | None = None  # Store last agent state for UI
 
         if self.use_agents:
             try:
@@ -232,6 +233,9 @@ class RAGService:
         agent_result: AgentState = self.agent_workflow.invoke(initial_state)  # type: ignore
         agent_time = time.time() - start_time
 
+        # Store agent state for UI access
+        self.last_agent_state = agent_result
+
         # Log agent decisions
         query_type = agent_result.get("query_type", "unknown")
         agents_called = agent_result.get("agent_calls", [])
@@ -270,6 +274,21 @@ class RAGService:
         # This is fine - the agent metadata is already logged
 
         return result
+
+    def get_last_reasoning_steps(self) -> tuple[list[dict[str, Any]], str | None]:
+        """Get reasoning steps from the last agent-processed query.
+
+        Returns:
+            Tuple of (reasoning_steps, query_type) from last agent execution,
+            or ([], None) if no agent state available
+        """
+        if self.last_agent_state is None:
+            return ([], None)
+
+        reasoning_steps = self.last_agent_state.get("reasoning_steps", [])
+        query_type = self.last_agent_state.get("query_type")
+
+        return (reasoning_steps, query_type)
 
     def delete_document(self, document_id: str) -> bool:
         """Delete all chunks associated with a document from the vector store.

@@ -53,7 +53,7 @@ def answer_synthesis_agent(state: AgentState) -> AgentState:
         context_parts = []
         all_sources: list[SourceCitation] = []
 
-        for i, (sub_q, result) in enumerate(zip(sub_queries, sub_results), 1):
+        for i, (sub_q, result) in enumerate(zip(sub_queries, sub_results, strict=True), 1):
             # Format each sub-answer with sources
             source_info = ""
             if result.sources:
@@ -161,7 +161,7 @@ Provide a comprehensive final answer that directly addresses the original questi
         fallback_parts = []
         all_sources = []
 
-        for i, (sub_q, result) in enumerate(zip(sub_queries, sub_results), 1):
+        for _i, (sub_q, result) in enumerate(zip(sub_queries, sub_results, strict=True), 1):
             fallback_parts.append(f"**{sub_q}**\n{result.answer}")
 
             # Collect sources

@@ -11,7 +11,7 @@ from src.pdf_processor.extractors import PDFTextExtractor
 from src.pdf_processor.models import ExtractedDocument, UploadedFile
 from src.rag.chunker import DocumentChunker
 from src.rag.embedder import EmbeddingGenerator
-from src.rag.models import QueryResult, RAGResult
+from src.rag.models import QueryResult
 from src.rag.query_engine import RAGQueryEngine
 from src.rag.service import RAGService
 from src.rag.vector_store import VectorStoreManager
@@ -447,7 +447,7 @@ class TestRAGEndToEnd:
                 source.relevance_score < 0.85 for source in result.sources
             ), "Out-of-scope queries should have low relevance scores"
 
-        logger.info(f"✓ Out-of-scope query handled gracefully")
+        logger.info("✓ Out-of-scope query handled gracefully")
         logger.info(f"Answer: {result.answer}")
 
     def test_e2e_source_citation_accuracy(

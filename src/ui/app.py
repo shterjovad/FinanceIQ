@@ -136,6 +136,39 @@ def main() -> None:
             st.caption(f"Model: {settings.EMBEDDING_MODEL}")
             st.caption(f"Vector DB: {settings.QDRANT_HOST}:{settings.QDRANT_PORT}")
             st.caption(f"LLM: {settings.PRIMARY_LLM}")
+
+            # Add divider
+            st.divider()
+
+            # Multi-Agent Settings
+            st.subheader("Query Processing")
+
+            # Initialize use_agents in session state
+            if "use_agents" not in st.session_state:
+                st.session_state.use_agents = settings.USE_AGENTS
+
+            # Toggle for enabling/disabling multi-agent processing
+            use_agents = st.toggle(
+                "Enable Multi-Agent Processing",
+                value=st.session_state.use_agents,
+                help=(
+                    "When enabled, complex queries are automatically decomposed into sub-queries, "
+                    "executed in parallel, and synthesized into comprehensive answers. "
+                    "Simple queries are processed normally."
+                ),
+            )
+
+            # Update session state
+            st.session_state.use_agents = use_agents
+
+            # Show agent status
+            if use_agents:
+                st.caption("🤖 Multi-agent system active")
+                st.caption("Complex queries will be decomposed")
+            else:
+                st.caption("📝 Standard processing mode")
+                st.caption("Queries processed directly")
+
         else:
             st.warning("⚠ RAG System Unavailable")
             st.caption("Check that OPENAI_API_KEY is set and Qdrant is running")
@@ -151,9 +184,7 @@ def main() -> None:
 
     with tab2:
         # Render chat interface
-        # Extract query engine from service if available
-        query_engine = rag_service.query_engine if rag_service else None
-        chat_component = ChatComponent(query_engine=query_engine)
+        chat_component = ChatComponent(rag_service=rag_service)
         chat_component.render()
 
 

@@ -2,8 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.agents.models import AgentState
 from src.agents.synthesizer import answer_synthesis_agent
 from src.rag.models import QueryResult, SourceCitation

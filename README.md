@@ -45,32 +45,46 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
   - Source citation with page numbers and relevance scores
   - Query guardrails to prevent hallucinations
 
+- **Multi-Agent Query Processing** (Phase 2)
+  - **Query Router Agent**: Classifies queries as simple or complex
+  - **Query Decomposer Agent**: Breaks complex queries into 2-5 sub-queries
+  - **Parallel Executor Agent**: Executes sub-queries concurrently (2.5x speedup)
+  - **Answer Synthesis Agent**: Combines results into coherent final answer
+  - **LangGraph Orchestration**: State machine-based agent workflow
+  - **Reasoning Transparency**: Full visibility into agent decision-making
+  - **UI Toggle**: Enable/disable agents on demand in the interface
+  - **Performance Optimized**: <20s for complex queries, <5s for simple queries
+
 - **Conversational Chat Interface**
   - Full conversation history within session
   - ChatGPT-style interface with message bubbles
   - Real-time "Thinking..." indicators
   - Expandable source citations per answer
   - Clickable example questions to get started
+  - Agent reasoning step visualization (when multi-agent mode enabled)
+  - Runtime agent mode toggle
 
 - **Service Orchestration**
   - Clean RAGService layer coordinating all components
   - Automatic error handling with structured results
   - Performance monitoring and timing metrics
   - Document lifecycle management (index/query/delete)
+  - Agent workflow integration with fallback support
 
 #### Code Quality
-  - 96% test coverage across RAG module
-  - 111 unit tests + 16 integration tests + 9 E2E tests
+  - 96% test coverage across all modules
+  - 160+ unit tests + 7 integration tests + 6 performance benchmarks
   - 100% type hint coverage with mypy strict mode
   - Comprehensive error handling with custom exception hierarchy
   - Structured logging throughout
   - Ruff linting and formatting (100% compliant)
 
 ### Roadmap (Future Phases)
-- **Phase 2**: Multi-Agent Intelligence
-  - LangGraph-based agent orchestration
-  - Query analysis and decomposition
-  - Multi-step reasoning system
+- **Phase 3**: Advanced Features
+  - Multi-document comparison and analysis
+  - Time-series analysis for financial trends
+  - Custom entity extraction for financial metrics
+  - Export and reporting capabilities
 
 ## Requirements
 
@@ -130,32 +144,51 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
 ```
 FinanceIQ/
 ├── src/
+│   ├── agents/                   # Multi-agent query processing
+│   │   ├── decomposer.py        # Query decomposition agent
+│   │   ├── executor.py          # Parallel sub-query executor
+│   │   ├── models.py            # Agent state definitions
+│   │   ├── router.py            # Query classification agent
+│   │   ├── synthesizer.py       # Answer synthesis agent
+│   │   └── workflow.py          # LangGraph workflow orchestration
 │   ├── config/
-│   │   └── settings.py           # Pydantic Settings configuration
+│   │   └── settings.py          # Pydantic Settings configuration
 │   ├── pdf_processor/
-│   │   ├── exceptions.py         # Custom exception hierarchy
-│   │   ├── extractors.py         # PDF text extraction logic
-│   │   ├── logging_config.py     # Logging configuration
-│   │   ├── models.py             # Pydantic data models
-│   │   ├── service.py            # PDF processing service orchestration
-│   │   ├── storage.py            # File storage management
-│   │   └── validators.py         # File validation logic
+│   │   ├── exceptions.py        # Custom exception hierarchy
+│   │   ├── extractors.py        # PDF text extraction logic
+│   │   ├── logging_config.py    # Logging configuration
+│   │   ├── models.py            # Pydantic data models
+│   │   ├── service.py           # PDF processing service orchestration
+│   │   ├── storage.py           # File storage management
+│   │   └── validators.py        # File validation logic
+│   ├── rag/                     # RAG system components
+│   │   ├── chunker.py           # Document chunking
+│   │   ├── embedder.py          # Embedding generation
+│   │   ├── models.py            # RAG data models
+│   │   ├── query_engine.py      # RAG query processing
+│   │   ├── service.py           # RAG service orchestration
+│   │   └── vector_store.py      # Qdrant vector store manager
 │   └── ui/
-│       ├── app.py                # Main Streamlit application
+│       ├── app.py               # Main Streamlit application
 │       └── components/
-│           └── upload.py         # PDF upload component
+│           ├── chat.py          # Conversational chat interface
+│           └── upload.py        # PDF upload component
 ├── tests/
-│   └── test_error_messages.py   # Error message validation tests
+│   ├── agents/                  # Agent unit tests (49 tests)
+│   ├── integration/             # Integration tests (7 tests)
+│   ├── performance/             # Performance benchmarks (6 tests)
+│   ├── pdf_processor/           # PDF processing tests
+│   └── rag/                     # RAG system tests
 ├── data/
-│   └── uploads/                  # Uploaded PDF files (gitignored)
-├── logs/                         # Application logs (gitignored)
-├── context/                      # Project documentation and specs
-│   ├── product/                  # Product docs (roadmap, architecture)
-│   └── spec/                     # Technical specifications
-├── .env                          # Environment variables (gitignored)
-├── .env.example                  # Example environment configuration
-├── pyproject.toml                # Project dependencies and tool config
-└── run.sh                        # Application startup script
+│   └── uploads/                 # Uploaded PDF files (gitignored)
+├── logs/                        # Application logs (gitignored)
+├── context/                     # Project documentation and specs
+│   ├── product/                 # Product docs (roadmap, architecture)
+│   └── spec/                    # Technical specifications
+├── .env                         # Environment variables (gitignored)
+├── .env.example                 # Example environment configuration
+├── pyproject.toml               # Project dependencies and tool config
+└── run.sh                       # Application startup script
 ```
 
 ## Configuration
@@ -180,6 +213,11 @@ Configuration is managed via environment variables in `.env` file:
 | `CHUNK_OVERLAP` | Chunk overlap (tokens) | 200 |
 | `TOP_K_CHUNKS` | Number of chunks to retrieve per query | 5 |
 | `MIN_RELEVANCE_SCORE` | Minimum similarity score (0-1) | 0.5 |
+| `USE_AGENTS` | Enable multi-agent query processing | true |
+| `AGENT_ROUTER_MODEL` | LLM for query classification | gpt-4-turbo-preview |
+| `AGENT_DECOMPOSER_MODEL` | LLM for query decomposition | gpt-4-turbo-preview |
+| `AGENT_SYNTHESIZER_MODEL` | LLM for answer synthesis | gpt-4-turbo-preview |
+| `MAX_SUB_QUERIES` | Maximum sub-queries for decomposition | 5 |
 
 ## Development
 
@@ -192,6 +230,7 @@ Configuration is managed via environment variables in `.env` file:
   - [Qdrant](https://qdrant.tech/) - High-performance vector database
   - [OpenAI](https://openai.com/) - Embeddings (text-embedding-3-small) and LLM (GPT-4-turbo)
   - [LangChain](https://www.langchain.com/) - Document chunking and text processing
+  - [LangGraph](https://www.langchain.com/langgraph) - State machine orchestration for multi-agent workflows
   - [tiktoken](https://github.com/openai/tiktoken) - Token counting for OpenAI models
 - **Data Validation**: [Pydantic](https://docs.pydantic.dev/) - Runtime type checking and data validation
 - **Package Management**: [uv](https://github.com/astral-sh/uv) - Fast Python package manager
@@ -235,16 +274,21 @@ Configuration is managed via environment variables in `.env` file:
 
 **Layered Architecture:**
 1. **Presentation Layer** (`src/ui/`): Streamlit-based user interface
-2. **Service Layer** (`src/pdf_processor/service.py`): Orchestrates business logic
-3. **Business Logic Layer** (`src/pdf_processor/`): PDF processing, validation, extraction
-4. **Data Layer** (`src/pdf_processor/storage.py`): File system storage management
-5. **Configuration Layer** (`src/config/`): Application settings and environment variables
+2. **Service Layer** (`src/rag/service.py`): Orchestrates RAG and agent workflows
+3. **Agent Layer** (`src/agents/`): Multi-agent query processing orchestration
+4. **Business Logic Layer**:
+   - `src/pdf_processor/`: PDF processing, validation, extraction
+   - `src/rag/`: Document chunking, embeddings, vector search
+5. **Data Layer**: File system storage and Qdrant vector database
+6. **Configuration Layer** (`src/config/`): Application settings and environment variables
 
 **Key Design Patterns:**
 - **Dependency Injection**: Services receive dependencies via constructor for loose coupling
+- **State Machine Pattern**: LangGraph-based agent orchestration with typed state
 - **Exception Hierarchy**: Custom exceptions for clear, type-safe error handling
 - **Type Safety**: Full type hint coverage with Pydantic models and mypy strict mode
-- **Service Orchestration**: Centralized processing pipeline in `PDFProcessingService`
+- **Service Orchestration**: Centralized processing pipeline with agent workflow integration
+- **Parallel Processing**: ThreadPoolExecutor for concurrent sub-query execution
 
 ## Error Handling
 

@@ -1,8 +1,6 @@
 """Integration tests for agent workflow."""
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from src.agents.models import AgentState
 from src.agents.workflow import (
