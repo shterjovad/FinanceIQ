@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION: str = "financial_docs"
+    QDRANT_API_KEY: str | None = None  # For Qdrant Cloud
+    QDRANT_USE_HTTPS: bool = False  # True for Qdrant Cloud
 
     # LLM & Embeddings (via LiteLLM)
     OPENAI_API_KEY: str = ""  # Will be required for embeddings in Slice 3

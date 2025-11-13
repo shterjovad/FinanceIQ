@@ -111,6 +111,8 @@ def initialize_rag_service() -> RAGService | None:
             host=settings.QDRANT_HOST,
             port=settings.QDRANT_PORT,
             collection_name=settings.QDRANT_COLLECTION,
+            api_key=settings.QDRANT_API_KEY,
+            use_https=settings.QDRANT_USE_HTTPS,
         )
         logger.info(
             f"Initialized VectorStoreManager connected to {settings.QDRANT_HOST}:{settings.QDRANT_PORT}"

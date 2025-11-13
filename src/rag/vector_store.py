@@ -28,16 +28,25 @@ class VectorStoreManager:
         client: QdrantClient instance for database operations
     """
 
-    def __init__(self, host: str, port: int, collection_name: str) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        collection_name: str,
+        api_key: str | None = None,
+        use_https: bool = False,
+    ) -> None:
         """Initialize VectorStoreManager and connect to Qdrant.
 
         Validates connection to Qdrant and ensures the collection exists with
         proper configuration (1536 dimensions, cosine distance).
 
         Args:
-            host: Qdrant server hostname (e.g., 'localhost')
-            port: Qdrant server port (e.g., 6333)
+            host: Qdrant server hostname (e.g., 'localhost' or 'xyz.qdrant.io')
+            port: Qdrant server port (e.g., 6333 for local, 6334 for Qdrant Cloud)
             collection_name: Name of the collection to use
+            api_key: Optional API key for Qdrant Cloud authentication
+            use_https: Whether to use HTTPS (True for Qdrant Cloud)
 
         Raises:
             VectorStoreError: If connection to Qdrant fails or collection cannot be created
@@ -47,14 +56,22 @@ class VectorStoreManager:
         self.collection_name = collection_name
 
         try:
-            self.client = QdrantClient(host=host, port=port)
+            # Connect to Qdrant with optional API key and HTTPS support
+            self.client = QdrantClient(
+                host=host,
+                port=port,
+                api_key=api_key,
+                https=use_https,
+            )
             # Test connection
             self.client.get_collections()
-            logger.info(f"Connected to Qdrant at {host}:{port}")
+            connection_type = "HTTPS" if use_https else "HTTP"
+            logger.info(f"Connected to Qdrant at {host}:{port} ({connection_type})")
         except Exception as e:
             error_msg = (
                 f"Failed to connect to Qdrant at {host}:{port}: {e}\n"
-                f"Start Qdrant with: docker compose up -d"
+                f"Local: Start with 'docker compose up -d'\n"
+                f"Cloud: Verify host, port, and API key"
             )
             logger.error(error_msg)
             raise VectorStoreError(error_msg) from e
