@@ -227,13 +227,13 @@ class PDFUploadComponent:
                                             st.session_state.indexed_documents.add(file_id)
 
                                             # Increment document count for session tracking
-                                            st.session_state.document_count = (
-                                                st.session_state.get("document_count", 0) + 1
-                                            )
+                                            old_count = st.session_state.get("document_count", 0)
+                                            st.session_state.document_count = old_count + 1
 
                                             logger.info(
                                                 f"Successfully indexed document {rag_result.document_id}: "
-                                                f"{rag_result.chunks_indexed} chunks"
+                                                f"{rag_result.chunks_indexed} chunks. "
+                                                f"Document count: {old_count} -> {st.session_state.document_count}"
                                             )
                                         else:
                                             # Indexing failed

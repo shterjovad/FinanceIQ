@@ -52,10 +52,13 @@ def initialize_session() -> None:
     """Initialize session ID and tracking variables if not exists."""
     if "session_id" not in st.session_state:
         st.session_state.session_id = str(uuid4())
-        st.session_state.document_count = 0
         logger.info(f"New session created: {st.session_state.session_id[:8]}...")
     else:
         logger.debug(f"Existing session: {st.session_state.session_id[:8]}...")
+
+    # Always ensure document_count is initialized
+    if "document_count" not in st.session_state:
+        st.session_state.document_count = 0
 
 
 def render_session_status() -> None:
@@ -155,14 +158,8 @@ def main() -> None:
     # Initialize session (must be first!)
     initialize_session()
 
-    # Display main title with session info
+    # Display main title
     st.title("FinanceIQ - Financial Document Analysis")
-    doc_count = st.session_state.get("document_count", 0)
-    st.caption(
-        f"🔒 Private Session | "
-        f"{doc_count} document{'s' if doc_count != 1 else ''} | "
-        f"Tab-only"
-    )
 
     # Initialize RAG service
     rag_service = initialize_rag_service()
@@ -213,9 +210,6 @@ def main() -> None:
             st.caption("Check that OPENAI_API_KEY is set and Qdrant is running")
             st.caption("Start Qdrant: docker compose up -d")
 
-    # Render session status in sidebar
-    render_session_status()
-
     # Create tabs for different functionality
     tab1, tab2 = st.tabs(["📄 Upload Documents", "💬 Ask Questions"])
 
@@ -234,6 +228,9 @@ def main() -> None:
             session_id=st.session_state.session_id
         )
         chat_component.render()
+
+    # Render session status in sidebar (after tabs so count is updated)
+    render_session_status()
 
 
 if __name__ == "__main__":
