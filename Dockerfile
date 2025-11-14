@@ -27,5 +27,8 @@ EXPOSE 8501
 # Health check
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
+# Set Python path so imports work correctly
+ENV PYTHONPATH=/app
+
 # Run the application
 CMD ["streamlit", "run", "src/ui/app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
