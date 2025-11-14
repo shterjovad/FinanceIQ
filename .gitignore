@@ -24,3 +24,22 @@ logs/
 
 # Test PDFs (download fresh for testing)
 data/sample/*.pdf
+
+# Archive folder (local dev docs not for git)
+_archive/
+
+# Claude Code working directories
+.awos/
+.claude/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info
+
+# Poetry lock (using uv instead)
+poetry.lock
