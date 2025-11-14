@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import Distance, PayloadSchemaType, PointStruct, VectorParams
 
 from src.rag.exceptions import VectorStoreError
 from src.rag.models import DocumentChunk
@@ -83,7 +83,8 @@ class VectorStoreManager:
         """Create collection if it doesn't exist with proper configuration.
 
         Creates a collection configured for 1536-dimensional embeddings with
-        cosine distance metric, suitable for OpenAI embeddings.
+        cosine distance metric, suitable for OpenAI embeddings. Also creates
+        a payload index on session_id for efficient filtering.
 
         Raises:
             VectorStoreError: If collection creation fails
@@ -101,8 +102,28 @@ class VectorStoreManager:
                     ),
                 )
                 logger.info(f"Created collection: {self.collection_name}")
+
+                # Create payload index on session_id for efficient filtering
+                self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name="session_id",
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+                logger.info(f"Created payload index on session_id for {self.collection_name}")
             else:
                 logger.info(f"Collection already exists: {self.collection_name}")
+
+                # Ensure session_id index exists even if collection existed
+                try:
+                    self.client.create_payload_index(
+                        collection_name=self.collection_name,
+                        field_name="session_id",
+                        field_schema=PayloadSchemaType.KEYWORD,
+                    )
+                    logger.info(f"Created payload index on session_id for {self.collection_name}")
+                except Exception:
+                    # Index might already exist, which is fine
+                    logger.debug("session_id index may already exist")
 
         except Exception as e:
             error_msg = f"Failed to ensure collection exists: {e}"
