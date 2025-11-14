@@ -93,11 +93,11 @@ class ChatComponent:
                 # Something went wrong, reset flag
                 st.session_state.processing_query = False
 
-        # Show example questions if chat history is empty
-        if not st.session_state.messages:
+        # Show example questions only if chat history is empty AND not currently processing
+        if not st.session_state.messages and not st.session_state.processing_query:
             self._show_example_questions()
-        else:
-            # Display existing chat history
+        elif not st.session_state.processing_query:
+            # Display existing chat history (only when not processing, since processing block above handles it)
             for message in st.session_state.messages:
                 self._render_message(message)
 
