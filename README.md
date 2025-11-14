@@ -1,6 +1,8 @@
 # FinanceIQ
 
-A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financial document analysis. FinanceIQ processes and extracts insights from PDF documents such as 10-K reports, earnings reports, and other financial statements.
+A production-ready, multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financial document analysis. FinanceIQ processes and extracts insights from PDF documents such as 10-K reports, earnings reports, and other financial statements with browser-based session isolation for secure multi-user deployment.
+
+**🚀 [Live Demo](https://financeiq-production.up.railway.app)** - Try it out with your own documents!
 
 ## Features
 
@@ -45,7 +47,7 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
   - Source citation with page numbers and relevance scores
   - Query guardrails to prevent hallucinations
 
-- **Multi-Agent Query Processing** (Phase 2)
+- **Multi-Agent Query Processing** (Phase 3)
   - **Query Router Agent**: Classifies queries as simple or complex
   - **Query Decomposer Agent**: Breaks complex queries into 2-5 sub-queries
   - **Parallel Executor Agent**: Executes sub-queries concurrently (2.5x speedup)
@@ -55,12 +57,19 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
   - **UI Toggle**: Enable/disable agents on demand in the interface
   - **Performance Optimized**: <20s for complex queries, <5s for simple queries
 
+- **Browser-Session Isolation** (Phase 4)
+  - **Per-Tab Document Storage**: Each browser tab maintains isolated documents
+  - **UUID-Based Sessions**: Cryptographically random session IDs
+  - **Automatic Cleanup**: Session data cleared when tab closes
+  - **Zero Data Leakage**: Complete isolation between concurrent users
+  - **Qdrant Payload Filtering**: Efficient session-based vector search
+  - **Production-Ready**: Suitable for public deployment and portfolio demonstrations
+
 - **Conversational Chat Interface**
   - Full conversation history within session
   - ChatGPT-style interface with message bubbles
   - Real-time "Thinking..." indicators
   - Expandable source citations per answer
-  - Clickable example questions to get started
   - Agent reasoning step visualization (when multi-agent mode enabled)
   - Runtime agent mode toggle
 
@@ -80,11 +89,12 @@ A multi-agent RAG (Retrieval-Augmented Generation) system for intelligent financ
   - Ruff linting and formatting (100% compliant)
 
 ### Roadmap (Future Phases)
-- **Phase 3**: Advanced Features
+- **Phase 5**: Advanced Multi-Document Features
   - Multi-document comparison and analysis
   - Time-series analysis for financial trends
   - Custom entity extraction for financial metrics
   - Export and reporting capabilities
+  - Document similarity detection
 
 ## Requirements
 
@@ -182,9 +192,14 @@ FinanceIQ/
 ├── data/
 │   └── uploads/                 # Uploaded PDF files (gitignored)
 ├── logs/                        # Application logs (gitignored)
-├── context/                     # Project documentation and specs
-│   ├── product/                 # Product docs (roadmap, architecture)
-│   └── spec/                    # Technical specifications
+├── scripts/                     # Helper scripts for local development
+│   ├── start_qdrant.sh          # Start local Qdrant instance
+│   └── verify_qdrant_setup.sh  # Verify Qdrant configuration
+├── .streamlit/
+│   └── config.toml              # Streamlit production configuration
+├── Dockerfile                   # Docker containerization for deployment
+├── railway.toml                 # Railway deployment configuration
+├── docker-compose.yml           # Local Qdrant setup
 ├── .env                         # Environment variables (gitignored)
 ├── .env.example                 # Example environment configuration
 ├── pyproject.toml               # Project dependencies and tool config
@@ -193,9 +208,11 @@ FinanceIQ/
 
 ## Configuration
 
-Configuration is managed via environment variables in `.env` file:
+Configuration is managed via environment variables in `.env` file.
 
-| Variable | Description | Default |
+**Note:** Default values shown are for local development. See production deployment section for cloud configuration.
+
+| Variable | Description | Default (Local) |
 |----------|-------------|---------|
 | `MAX_FILE_SIZE_MB` | Maximum file size for uploads (MB) | 50 |
 | `ALLOWED_MIME_TYPES` | Allowed MIME types | application/pdf |
@@ -206,13 +223,15 @@ Configuration is managed via environment variables in `.env` file:
 | `QDRANT_HOST` | Qdrant vector database host | localhost |
 | `QDRANT_PORT` | Qdrant vector database port | 6333 |
 | `QDRANT_COLLECTION` | Qdrant collection name | financial_docs |
+| `QDRANT_API_KEY` | Qdrant Cloud API key (for production) | None |
+| `QDRANT_USE_HTTPS` | Use HTTPS for Qdrant connection (Cloud) | false |
 | `EMBEDDING_MODEL` | OpenAI embedding model | text-embedding-3-small |
 | `PRIMARY_LLM` | Primary LLM for answer generation | gpt-4-turbo-preview |
 | `FALLBACK_LLM` | Fallback LLM if primary fails | gpt-3.5-turbo |
 | `CHUNK_SIZE` | Document chunk size (tokens) | 1000 |
 | `CHUNK_OVERLAP` | Chunk overlap (tokens) | 200 |
 | `TOP_K_CHUNKS` | Number of chunks to retrieve per query | 5 |
-| `MIN_RELEVANCE_SCORE` | Minimum similarity score (0-1) | 0.5 |
+| `MIN_RELEVANCE_SCORE` | Minimum similarity score (0-1) | 0.3 |
 | `USE_AGENTS` | Enable multi-agent query processing | true |
 | `AGENT_ROUTER_MODEL` | LLM for query classification | gpt-4-turbo-preview |
 | `AGENT_DECOMPOSER_MODEL` | LLM for query decomposition | gpt-4-turbo-preview |
@@ -289,6 +308,37 @@ Configuration is managed via environment variables in `.env` file:
 - **Type Safety**: Full type hint coverage with Pydantic models and mypy strict mode
 - **Service Orchestration**: Centralized processing pipeline with agent workflow integration
 - **Parallel Processing**: ThreadPoolExecutor for concurrent sub-query execution
+
+## Production Deployment
+
+FinanceIQ is production-ready and can be deployed to cloud platforms like Railway, Render, or Fly.io.
+
+### Requirements for Production:
+- **Cloud Vector Database**: Qdrant Cloud (free tier available)
+- **Container Platform**: Any Docker-compatible hosting (Railway, Render, Fly.io)
+- **Environment Variables**: Configure for HTTPS and cloud services
+
+### Key Configuration Changes for Production:
+```bash
+# Use Qdrant Cloud instead of localhost
+QDRANT_HOST=your-cluster.qdrant.io
+QDRANT_PORT=6333
+QDRANT_API_KEY=your-api-key
+QDRANT_USE_HTTPS=true
+
+# Adjust relevance threshold for better results
+MIN_RELEVANCE_SCORE=0.3
+
+# Enable multi-agent processing
+USE_AGENTS=true
+```
+
+### Session Isolation in Production:
+- Each browser tab gets a unique UUID-based session
+- Documents are isolated per session using Qdrant payload filtering
+- Sessions automatically clear when tabs close
+- No data leakage between concurrent users
+- Suitable for public portfolio demonstrations
 
 ## Error Handling
 
