@@ -26,7 +26,6 @@ class ChatComponent:
 
     Provides a ChatGPT-like interface with:
     - Persistent chat history
-    - Example questions for new sessions
     - Source citations in expandable sections
     - Agent reasoning steps display (when multi-agent mode is enabled)
     - Error handling for unavailable services
@@ -93,44 +92,14 @@ class ChatComponent:
                 # Something went wrong, reset flag
                 st.session_state.processing_query = False
 
-        # Show example questions only if chat history is empty AND not currently processing
-        if not st.session_state.messages and not st.session_state.processing_query:
-            self._show_example_questions()
-        elif not st.session_state.processing_query:
-            # Display existing chat history (only when not processing, since processing block above handles it)
+        # Display chat history (only when not processing, since processing block above handles it)
+        if not st.session_state.processing_query:
             for message in st.session_state.messages:
                 self._render_message(message)
 
         # Chat input at the bottom
         if prompt := st.chat_input("Ask a question about your documents..."):
             self._handle_user_input(prompt)
-
-    def _show_example_questions(self) -> None:
-        """Display example questions that users can click to start a conversation."""
-        st.markdown("### Example Questions")
-        st.markdown("Get started by asking one of these questions:")
-
-        # Create 2 columns for 4 example questions
-        col1, col2 = st.columns(2)
-
-        examples = [
-            "What were the main revenue drivers?",
-            "What are the top risk factors?",
-            "How did operating expenses change?",
-            "What is the company's cash position?",
-        ]
-
-        with col1:
-            if st.button(examples[0], key="example_0", use_container_width=True):
-                self._handle_user_input(examples[0])
-            if st.button(examples[1], key="example_1", use_container_width=True):
-                self._handle_user_input(examples[1])
-
-        with col2:
-            if st.button(examples[2], key="example_2", use_container_width=True):
-                self._handle_user_input(examples[2])
-            if st.button(examples[3], key="example_3", use_container_width=True):
-                self._handle_user_input(examples[3])
 
     def _handle_user_input(self, user_message: str) -> None:
         """Handle user input by adding message to chat and triggering processing.
